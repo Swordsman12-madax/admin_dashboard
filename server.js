@@ -1,13 +1,9 @@
-// server.js - Simple Admin Dashboard
+// Minimal server.js
 const express = require('express');
-const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files
-app.use(express.static('public'));
-
-// Simple route for testing
+// The main page
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -23,38 +19,21 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Admin dashboard
+// The admin page
 app.get('/admin123', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+    res.send(`
+        <html>
+        <head><title>Dashboard</title></head>
+        <body style="background:#0a0e17;color:#fff;font-family:sans-serif;padding:20px;">
+            <h1 style="color:#4fc3f7;">📊 Dashboard</h1>
+            <p>Your dashboard is working!</p>
+            <p style="color:#8896ab;">Devices: 0 | Numbers: 0 | Online: 0</p>
+            <p style="color:#4a5568;font-size:12px;position:fixed;bottom:10px;right:10px;">ADMIN GRY</p>
+        </body>
+        </html>
+    `);
 });
 
-// Simple login
-app.post('/admin123/api/login', express.json(), (req, res) => {
-    const { username, password } = req.body;
-    if (username === 'admin' && password === 'yourpassword123') {
-        res.json({ success: true });
-    } else {
-        res.status(401).json({ error: 'Invalid credentials' });
-    }
-});
-
-// API endpoints
-app.get('/admin123/api/stats', (req, res) => {
-    res.json({ devices: 0, numbers: 0, online: 0 });
-});
-
-app.get('/admin123/api/devices', (req, res) => {
-    res.json([]);
-});
-
-app.get('/admin123/api/numbers', (req, res) => {
-    res.json([]);
-});
-
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
     console.log('✅ Server running on port', PORT);
-    console.log('📍 http://localhost:' + PORT + '/admin123');
-    console.log('🔑 Username: admin');
-    console.log('🔑 Password: yourpassword123');
 });

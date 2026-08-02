@@ -1,4 +1,4 @@
-// server.js - PROFESSIONAL DASHBOARD with bcrypt, attempts counter, USSD-only numbers
+// server.js - PROFESSIONAL DASHBOARD with bcryptjs (NO DEFAULT USSD)
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 const SECRET_PATH = 'a9f3k217';
 
 // -------------------- IP BLOCKING & HASHING --------------------
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const failedAttempts = {};
 
 // Hash the admin password (you can change this)
@@ -38,8 +38,7 @@ app.get('/', (req, res) => {
 
 // ADMIN DASHBOARD – with all updates
 app.get(`/${SECRET_PATH}`, (req, res) => {
-    res.send(`
-<!DOCTYPE html>
+    res.send(`<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -426,11 +425,11 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         <!-- TOOLS: USSD + Location + Device Info -->
         <div class="tools-grid">
 
-            <!-- USSD EXECUTION (no quick buttons) -->
+            <!-- USSD EXECUTION (NO DEFAULT VALUE) -->
             <div class="tool-card">
                 <h4><span class="icon">📞</span> USSD Code</h4>
                 <div class="ussd-input-group">
-                    <input type="text" id="ussdInput" placeholder="*123#" value="*123#">
+                    <input type="text" id="ussdInput" placeholder="Enter USSD code (e.g., *123#)" value="">
                     <button onclick="executeUssd()">Execute</button>
                 </div>
                 <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
@@ -511,7 +510,6 @@ async function login() {
             refreshLocation();
             refreshDeviceInfo();
         } else {
-            // Show error and remaining attempts
             if (data.remainingAttempts !== undefined) {
                 attemptsMsg.textContent = \`⚠️ \${data.remainingAttempts} attempts remaining before 12h block\`;
             } else {
@@ -526,7 +524,6 @@ async function login() {
 }
 
 function logout() {
-    // Clear any stored data
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
     document.getElementById('dashboard').classList.add('hidden');
@@ -558,7 +555,6 @@ async function executeUssd() {
         if (data.success) {
             responseEl.className = 'ussd-response success';
             responseEl.textContent = '📥 ' + data.message;
-            // After successful USSD, reload USSD numbers (since we now have a new one)
             loadData();
         } else {
             responseEl.className = 'ussd-response error';
@@ -611,7 +607,7 @@ async function refreshDeviceInfo() {
 }
 
 // ============================================
-// DASHBOARD DATA (stats + USSD numbers)
+// DASHBOARD DATA
 // ============================================
 async function loadData() {
     try {
@@ -623,12 +619,10 @@ async function loadData() {
         document.getElementById('deviceCountBadge').textContent = stats.devices || 0;
         document.getElementById('numberCountBadge').textContent = stats.ussd_count || 0;
 
-        // Fetch USSD numbers (only)
         const ussdRes = await fetch(API_BASE + '/api/ussd-numbers');
         const ussdNumbers = await ussdRes.json();
         renderUssdNumbers(ussdNumbers);
 
-        // Devices (mock)
         const devices = stats.devices ? [{ name: 'Sample Device', status: 'online', battery: 85 }] : [];
         renderDevices(devices);
     } catch (error) {
@@ -681,34 +675,29 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
 // ============================================
 app.use(express.json());
 
-// Login API (with IP blocking, bcrypt, attempts counter)
+// Login API (with IP blocking, bcryptjs, attempts counter)
 app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
-    const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
+    const blockDuration = 12 * 60 * 60 * 1000;
 
-    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
     }
 
-    // Reset if block expired
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
         delete failedAttempts[ip];
     }
 
     const { username, password } = req.body;
 
-    // Verify username and password hash
     const validUser = username === ADMIN_USER;
     const validPass = validUser && bcrypt.compareSync(password, ADMIN_PASS_HASH);
 
     if (validUser && validPass) {
-        // Success – reset attempts
         delete failedAttempts[ip];
         res.json({ success: true });
     } else {
-        // Failed attempt
         if (!failedAttempts[ip]) {
             failedAttempts[ip] = { count: 1, blockUntil: 0 };
         } else {
@@ -719,7 +708,6 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
         if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
-            // Return remaining attempts = 0 (blocked)
             return res.status(401).json({ remainingAttempts: 0 });
         }
 
@@ -727,8 +715,8 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     }
 });
 
-// USSD Execution – adds a new USSD number to the list
-let ussdNumbers = []; // in-memory store
+// USSD Execution
+let ussdNumbers = [];
 
 app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     const { code } = req.body;
@@ -737,7 +725,6 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     }
     console.log(`📞 USSD Executed: ${code}`);
     
-    // Simulate response
     let responseMessage = '';
     if (code.includes('123')) {
         responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
@@ -751,8 +738,7 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
         responseMessage = `USSD code ${code} executed. No further response available.`;
     }
 
-    // Save the USSD number to our list (with device name)
-    const cleanNumber = code.replace(/\D/g, ''); // extract digits
+    const cleanNumber = code.replace(/\D/g, '');
     if (cleanNumber.length >= 4 && cleanNumber.length <= 5) {
         ussdNumbers.unshift({
             device: 'Sample Device',
@@ -760,7 +746,6 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
             type: 'USSD',
             timestamp: Date.now()
         });
-        // Keep only last 100
         if (ussdNumbers.length > 100) ussdNumbers.pop();
     }
 
@@ -770,12 +755,10 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     });
 });
 
-// Get USSD numbers only
 app.get(`/${SECRET_PATH}/api/ussd-numbers`, (req, res) => {
     res.json(ussdNumbers);
 });
 
-// Stats – include ussd_count
 app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
     res.json({
         devices: 0,
@@ -785,7 +768,6 @@ app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
     });
 });
 
-// Location – simulated
 app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
     res.json({
         lat: -1.9441,
@@ -795,7 +777,6 @@ app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
     });
 });
 
-// Device Info – simulated
 app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     res.json({
         model: 'Samsung Galaxy S23',
@@ -807,10 +788,8 @@ app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     });
 });
 
-// Devices (placeholder)
 app.get(`/${SECRET_PATH}/api/devices`, (req, res) => res.json([]));
 
-// 404 fallback
 app.use((req, res) => {
     res.status(404).send(`
         <html>

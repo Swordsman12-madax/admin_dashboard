@@ -159,6 +159,9 @@ async function login() {
         });
         const data = await response.json();
 
+        // Debug: log the response
+        console.log('Login response:', data);
+
         if (data.success) {
             localStorage.setItem('adminLoggedIn', 'true');
             document.getElementById('loginContainer').style.display = 'none';
@@ -166,15 +169,13 @@ async function login() {
             loadData();
             refreshLocation();
             refreshDeviceInfo();
-            // Clear fields on success (optional)
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
         } else {
-            // Failed attempt – clear both fields
+            // Clear both fields on failure
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
 
-            // Show remaining attempts or block message
             if (data.remainingAttempts !== undefined) {
                 let left = data.remainingAttempts;
                 let msg;
@@ -189,9 +190,10 @@ async function login() {
                 errorEl.style.display = 'block';
             }
         }
-    } catch {
+    } catch (err) {
         errorEl.textContent = 'Connection error';
         errorEl.style.display = 'block';
+        console.error('Login error:', err);
     }
 }
 
@@ -280,7 +282,7 @@ async function loadData() {
         renderUssdNumbers(ussdNumbers);
         const devices = stats.devices ? [{ name: 'Sample Device', status: 'online', battery: 85 }] : [];
         renderDevices(devices);
-    } catch (error) { console.error('Error:', error); }
+    } catch (error) { console.error('Error loading data:', error); }
 }
 
 function renderDevices(devices) {
@@ -327,4 +329,4 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
 });
 </script>
 </body>
-    </html>
+</html>

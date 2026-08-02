@@ -1,59 +1,197 @@
-// server.js - Simple Admin Dashboard
-const express = require('express');
-const path = require('path');
-const app = express();
-const PORT = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, sans-serif;
+            background: #0a0e17;
+            color: #e0e6ed;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #1a2332;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 24px; color: #4fc3f7; }
+        .logout { color: #ff6b6b; cursor: pointer; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #4fc3f7; }
+        .stat-card .label { font-size: 12px; color: #8896ab; }
+        .section {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section h3 { margin-bottom: 15px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; color: #8896ab; padding: 8px; border-bottom: 1px solid #1a2332; }
+        td { padding: 8px; border-bottom: 1px solid #0a0e17; }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }
+        .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .admin-gry {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 8px;
+            color: rgba(79,195,247,0.05);
+            user-select: none;
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        .hidden { display: none; }
+        .login-container {
+            max-width: 350px;
+            margin: 80px auto;
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 14px;
+        }
+        .login-container input:focus { outline: none; border-color: #4fc3f7; }
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
 
-// Serve static files
-app.use(express.static('public'));
+<div class="admin-gry">ADMIN GRY</div>
 
-// Homepage
-app.get('/', (req, res) => {
-    res.send(`
-        <html>
-        <head>
-            <title>Kigali Tech Solutions</title>
-            <style>
-                body { background: #0a0e17; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; margin: 0; }
-                h1 { color: #4fc3f7; font-size: 36px; }
-                p { color: #8896ab; }
-                .admin-gry { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: rgba(79,195,247,0.05); user-select: none; }
-            </style>
-        </head>
-        <body>
-            <div>
-                <h1>🏎️ Kigali Tech Solutions</h1>
-                <p>Innovating the future of racing technology.</p>
-                <div class="admin-gry">ADMIN GRY</div>
-            </div>
-        </body>
-        </html>
-    `);
+<!-- LOGIN -->
+<div id="loginContainer" class="login-container">
+    <h3 style="margin-bottom:10px;">🔐 Admin Access</h3>
+    <input type="text" id="loginUser" placeholder="Username" value="admin">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button onclick="login()">Sign In</button>
+    <div id="loginError" style="color:#ff6b6b;margin-top:10px;display:none;"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="container hidden">
+    <div class="header">
+        <h1>📊 Admin Dashboard</h1>
+        <span class="logout" onclick="logout()">🚪 Exit</span>
+    </div>
+
+    <div class="stats" id="statsGrid">
+        <div class="stat-card"><div class="value" id="devicesCount">0</div><div class="label">📱 Devices</div></div>
+        <div class="stat-card"><div class="value" id="numbersCount">0</div><div class="label">🔢 Numbers</div></div>
+        <div class="stat-card"><div class="value" id="onlineCount">0</div><div class="label">🟢 Online</div></div>
+    </div>
+
+    <div class="section">
+        <h3>📱 Recent Devices</h3>
+        <div id="devicesList"><p style="color:#8896ab;">No devices connected</p></div>
+    </div>
+
+    <div class="section">
+        <h3>🔢 Recent Short Numbers (4-5 digits)</h3>
+        <div id="numbersList"><p style="color:#8896ab;">No numbers detected</p></div>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/admin123';
+
+async function login() {
+    const username = document.getElementById('loginUser').value;
+    const password = document.getElementById('loginPass').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.style.display = 'none';
+
+    try {
+        const response = await fetch(API_BASE + '/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadData();
+        } else {
+            errorEl.textContent = 'Invalid credentials';
+            errorEl.style.display = 'block';
+        }
+    } catch {
+        errorEl.textContent = 'Connection error';
+        errorEl.style.display = 'block';
+    }
+}
+
+function logout() {
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('loginContainer').style.display = 'block';
+}
+
+async function loadData() {
+    try {
+        const response = await fetch(API_BASE + '/api/stats');
+        const stats = await response.json();
+        document.getElementById('devicesCount').textContent = stats.devices || 0;
+        document.getElementById('numbersCount').textContent = stats.numbers || 0;
+        document.getElementById('onlineCount').textContent = stats.online || 0;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+document.getElementById('loginPass').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') login();
 });
+</script>
 
-// Admin dashboard
-app.get('/admin123', (req, res) => {
-    res.send(`
-        <html>
-        <head>
-            <title>Dashboard</title>
-            <style>
-                body { background: #0a0e17; color: #fff; font-family: sans-serif; padding: 20px; }
-                h1 { color: #4fc3f7; }
-                .admin-gry { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: rgba(79,195,247,0.05); user-select: none; }
-            </style>
-        </head>
-        <body>
-            <h1>📊 Dashboard</h1>
-            <p>Your dashboard is working!</p>
-            <p style="color:#8896ab;">Devices: 0 | Numbers: 0 | Online: 0</p>
-            <div class="admin-gry">ADMIN GRY</div>
-        </body>
-        </html>
-    `);
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log('✅ Server running on port', PORT);
-    console.log('📍 http://localhost:' + PORT + '/admin123');
-});
+</body>
+</html>

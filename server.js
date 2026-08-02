@@ -17,9 +17,7 @@ function getClientIP(req) {
            req.connection.remoteAddress;
 }
 
-// ============================================
 // FAKE SITE
-// ============================================
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -35,9 +33,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ============================================
-// ADMIN DASHBOARD
-// ============================================
+// ADMIN DASHBOARD (full HTML)
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`<!DOCTYPE html>
 <html>
@@ -343,6 +339,7 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
     `);
 });
 
+
 // ============================================
 // API ENDPOINTS
 // ============================================
@@ -354,12 +351,10 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
 
-    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
     }
 
-    // Reset if block expired
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
         delete failedAttempts[ip];
     }
@@ -465,19 +460,3 @@ app.listen(PORT, () => {
     console.log('✅ Dashboard running (in-memory IP blocking)');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
 });
-```
-
----
-
-2. Update package.json
-
-Remove @vercel/kv from package.json. Replace with:
-
-```json
-{
-  "name": "admin-dashboard",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.18.2"
-  }
-        }

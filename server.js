@@ -61,7 +61,7 @@ app.get('/', (req, res) => {
                     height: 100%;
                     background: 
                         linear-gradient(135deg, rgba(10,14,23,0.7) 0%, rgba(10,14,23,0.3) 100%),
-                        url('/public/images/kigali-convention-center.png') center/cover no-repeat;
+                        url('/images/kigali-convention-center.png') center/cover no-repeat;
                     z-index: 0;
                 }
 

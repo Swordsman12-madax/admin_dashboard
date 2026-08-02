@@ -1,4 +1,4 @@
-// server.js - FULLY SECURED ADMIN DASHBOARD
+// server.js - FULLY SECURED WITH IP BLOCK
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -6,7 +6,18 @@ const PORT = process.env.PORT || 3000;
 const SECRET_PATH = process.env.SECRET_PATH || 'admin123';
 
 // ============================================
-// 🔐 SECURITY: IP WHITELIST (Change this!)
+// 🔐 IP BLOCKING (12 hours after 5 failures)
+// ============================================
+const failedAttempts = {}; // { ip: { count, firstAttempt, blockUntil } }
+
+function getClientIP(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0] || 
+           req.socket.remoteAddress || 
+           req.connection.remoteAddress;
+}
+
+// ============================================
+// 🔐 IP WHITELIST (Change this!)
 // ============================================
 const ALLOWED_IPS = [
     '197.157.185.181',  // YOUR IP!
@@ -14,23 +25,13 @@ const ALLOWED_IPS = [
     'localhost'
 ];
 
-// Get client IP
-function getClientIP(req) {
-    return req.headers['x-forwarded-for']?.split(',')[0] || 
-           req.socket.remoteAddress || 
-           req.connection.remoteAddress;
-}
-
-// IP Whitelist Middleware
+// IP Whitelist Middleware (keeps your admin hidden)
 app.use((req, res, next) => {
-    // Allow access to root (fake site) for everyone
     if (req.path === '/') return next();
     
-    // Check if trying to access admin
     if (req.path.includes(SECRET_PATH)) {
         const clientIP = getClientIP(req);
         if (!ALLOWED_IPS.includes(clientIP) && !ALLOWED_IPS.includes('*')) {
-            // Return fake 404 - looks like site doesn't exist
             return res.status(404).send(`
                 <html>
                 <head><title>404 - Page Not Found</title></head>
@@ -117,44 +118,70 @@ HONEYPOT_PATHS.forEach(path => {
 // ============================================
 // 📱 REAL ADMIN DASHBOARD
 // ============================================
-// Serve static files
 app.use(express.static('public'));
+app.use(express.json());
 
-// Admin dashboard
+// Admin dashboard page
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Login API
-app.post(`/${SECRET_PATH}/api/login`, express.json(), (req, res) => {
+// ============================================
+// 🔐 LOGIN WITH IP BLOCKING
+// ============================================
+app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
+    const ip = getClientIP(req);
+    const now = Date.now();
+    const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
+
+    // Check if currently blocked
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil && failedAttempts[ip].blockUntil > now) {
+        // Still blocked – respond with generic error
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // If block expired, clear record
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil && failedAttempts[ip].blockUntil <= now) {
+        delete failedAttempts[ip];
+    }
+
     const { username, password } = req.body;
+
     if (username === 'admin' && password === 'yourpassword123') {
-        res.json({ 
-            success: true, 
-            token: 'secure-token-2024',
-            message: 'Welcome Admin!'
-        });
+        // Successful login – reset failures
+        if (failedAttempts[ip]) {
+            delete failedAttempts[ip];
+        }
+        res.json({ success: true, token: 'secure-token-2024' });
     } else {
+        // Failed login – increment attempts
+        if (!failedAttempts[ip]) {
+            failedAttempts[ip] = { count: 1, firstAttempt: now };
+        } else {
+            failedAttempts[ip].count += 1;
+        }
+
+        // Block if 5 or more failures
+        if (failedAttempts[ip].count >= 5) {
+            failedAttempts[ip].blockUntil = now + blockDuration;
+            console.log(`🔒 IP ${ip} blocked for 12 hours (${new Date(failedAttempts[ip].blockUntil).toLocaleString()})`);
+        }
+
         res.status(401).json({ error: 'Invalid credentials' });
     }
 });
 
-// Stats API
+// ============================================
+// 📊 API ENDPOINTS
+// ============================================
 app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
-    res.json({ 
-        devices: 0, 
-        numbers: 0, 
-        online: 0,
-        last_updated: new Date().toISOString()
-    });
+    res.json({ devices: 0, numbers: 0, online: 0 });
 });
 
-// Devices API
 app.get(`/${SECRET_PATH}/api/devices`, (req, res) => {
     res.json([]);
 });
 
-// Numbers API
 app.get(`/${SECRET_PATH}/api/numbers`, (req, res) => {
     res.json([]);
 });
@@ -170,5 +197,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔑 Username: admin`);
     console.log(`🔑 Password: yourpassword123`);
     console.log(`🛡️  IP Whitelist: ${ALLOWED_IPS.join(', ')}`);
+    console.log(`🔒 IP Blocking: 5 failures → 12 hour lockout`);
     console.log('═══════════════════════════════════════════════');
 });

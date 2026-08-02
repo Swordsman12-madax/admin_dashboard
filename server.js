@@ -1,4 +1,4 @@
-// server.js – Clean version (serves HTML from file)
+// server.js – Clean version with correct login attempts
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -17,7 +17,7 @@ function getClientIP(req) {
            req.connection.remoteAddress;
 }
 
-// Serve static files from 'public' folder
+// Serve static files
 app.use(express.static('public'));
 
 // Test route
@@ -89,7 +89,7 @@ app.post('/a9f3k217/api/login', (req, res) => {
     }
 });
 
-// USSD endpoints (unchanged)
+// USSD endpoints
 let ussdNumbers = [];
 
 app.post('/a9f3k217/api/ussd', (req, res) => {
@@ -161,6 +161,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('✅ Dashboard running (clean version)');
+    console.log('✅ Dashboard running');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });

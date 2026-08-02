@@ -1,4 +1,4 @@
-// server.js - WORKING VERSION
+// server.js - CORRECTED VERSION
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -25,12 +25,12 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Admin dashboard - using SECRET_PATH from env
+// ✅ Admin dashboard - USING BACKTICKS
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Login API
+// ✅ Login API - USING BACKTICKS
 app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const { username, password } = req.body;
     if (username === 'admin' && password === 'yourpassword123') {
@@ -40,22 +40,22 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     }
 });
 
-// Stats API
+// ✅ Stats API - USING BACKTICKS
 app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
     res.json({ devices: 0, numbers: 0, online: 0 });
 });
 
-// Devices API
+// ✅ Devices API - USING BACKTICKS
 app.get(`/${SECRET_PATH}/api/devices`, (req, res) => {
     res.json([]);
 });
 
-// Numbers API
+// ✅ Numbers API - USING BACKTICKS
 app.get(`/${SECRET_PATH}/api/numbers`, (req, res) => {
     res.json([]);
 });
 
-// Debug route - check environment variables
+// Debug route
 app.get('/debug', (req, res) => {
     res.json({
         SECRET_PATH: process.env.SECRET_PATH || 'NOT SET',
@@ -67,6 +67,6 @@ app.get('/debug', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log('✅ Server running on port', PORT);
-    console.log('📂 SECRET_PATH:', SECRET_PATH);
+    console.log('🔑 SECRET_PATH:', SECRET_PATH);
     console.log('📍 https://admin-dashboard-teal-beta-28.vercel.app/' + SECRET_PATH);
 });

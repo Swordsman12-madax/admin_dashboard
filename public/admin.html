@@ -146,9 +146,11 @@ async function login() {
     const password = document.getElementById('loginPass').value;
     const errorEl = document.getElementById('loginError');
     const attemptsMsg = document.getElementById('attemptsMsg');
+
     // Clear previous messages
     errorEl.style.display = 'none';
     attemptsMsg.textContent = '';
+
     try {
         const response = await fetch(API_BASE + '/api/login', {
             method: 'POST',
@@ -156,6 +158,7 @@ async function login() {
             body: JSON.stringify({ username, password })
         });
         const data = await response.json();
+
         if (data.success) {
             localStorage.setItem('adminLoggedIn', 'true');
             document.getElementById('loginContainer').style.display = 'none';
@@ -163,10 +166,15 @@ async function login() {
             loadData();
             refreshLocation();
             refreshDeviceInfo();
-            // Clear password field on success (optional)
+            // Clear fields on success (optional)
+            document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
         } else {
-            // Failed attempt – show remaining attempts
+            // Failed attempt – clear both fields
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+
+            // Show remaining attempts or block message
             if (data.remainingAttempts !== undefined) {
                 let left = data.remainingAttempts;
                 let msg;
@@ -176,8 +184,6 @@ async function login() {
                     msg = '⚠️ ' + left + ' attempt' + (left > 1 ? 's' : '') + ' remaining before 12h block';
                 }
                 attemptsMsg.textContent = msg;
-                // Clear password field on failure
-                document.getElementById('loginPass').value = '';
             } else {
                 errorEl.textContent = data.error || 'Invalid credentials';
                 errorEl.style.display = 'block';

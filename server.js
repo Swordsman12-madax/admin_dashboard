@@ -1,14 +1,15 @@
-// server.js – Full Security with In-Memory IP Blocking
+// server.js – HARDCODED SECRET PATH (ignores env)
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SECRET_PATH = process.env.SECRET_PATH || 'a9f3k217';
+// 🔒 HARDCODED – ignore any environment variable
+const SECRET_PATH = 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
 
-// In-memory storage for IP blocking (resets on server restart)
+// In-memory storage for IP blocking
 const failedAttempts = {};
 
 function getClientIP(req) {
@@ -18,7 +19,14 @@ function getClientIP(req) {
 }
 
 // ============================================================
-// 1. FAKE SITE (decoy for unauthorized visitors)
+// TEST ROUTE
+// ============================================================
+app.get('/test', (req, res) => {
+    res.send('✅ Test route works!');
+});
+
+// ============================================================
+// FAKE SITE
 // ============================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -34,14 +42,11 @@ app.get('/', (req, res) => {
         </html>
     `);
 });
-// Test route – always works
-app.get('/test', (req, res) => {
-    res.send('✅ Test route works!');
-});
+
 // ============================================================
-// 2. ADMIN DASHBOARD (full HTML – no backticks inside)
+// ADMIN DASHBOARD – HARDCODED PATH
 // ============================================================
-app.get(`/${SECRET_PATH}`, (req, res) => {
+app.get('/a9f3k217', (req, res) => {
     // Build the HTML using a regular string (concatenation) to avoid syntax issues
     let html = '<!DOCTYPE html>\n';
     html += '<html>\n';
@@ -183,7 +188,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
     html += '  </div>\n';
     html += '</div>\n';
     html += '<script>\n';
-    html += 'const API_BASE = "/' + SECRET_PATH + '";\n';
+    html += 'const API_BASE = "/a9f3k217";\n';
     html += '\n';
     html += 'async function login() {\n';
     html += '  const username = document.getElementById("loginUser").value;\n';
@@ -273,10 +278,10 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
     html += '    } else {\n';
     html += '      document.getElementById("mapLink").style.display = "none";\n';
     html += '    }\n';
-    html += '  } catch {}\n';
+     html += '  } catch {}\n';
     html += '}\n';
     html += '\n';
-        html += 'async function refreshDeviceInfo() {\n';
+    html += 'async function refreshDeviceInfo() {\n';
     html += '  try {\n';
     html += '    const res = await fetch(API_BASE + "/api/device-info");\n';
     html += '    const data = await res.json();\n';
@@ -347,22 +352,20 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
 });
 
 // ============================================================
-// 3. API ENDPOINTS
+// API ENDPOINTS
 // ============================================================
 app.use(express.json());
 
-// ---- Login ----
-app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
+// Login
+app.post('/a9f3k217/api/login', (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
 
-    // Check if currently blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
     }
 
-    // Reset if block expired
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
         delete failedAttempts[ip];
     }
@@ -373,11 +376,9 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const validPass = validUser && hash === ADMIN_PASS_HASH;
 
     if (validUser && validPass) {
-        // Success – clear attempts
         delete failedAttempts[ip];
         res.json({ success: true });
     } else {
-        // Failed attempt
         if (!failedAttempts[ip]) {
             failedAttempts[ip] = { count: 1, blockUntil: 0 };
         } else {
@@ -395,10 +396,10 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     }
 });
 
-// ---- USSD Execution ----
+// USSD Execution
 let ussdNumbers = [];
 
-app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
+app.post('/a9f3k217/api/ussd', (req, res) => {
     const { code } = req.body;
     if (!code) return res.status(400).json({ error: 'No USSD code provided' });
     console.log(`📞 USSD Executed: ${code}`);
@@ -424,13 +425,11 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     res.json({ success: true, message: responseMessage });
 });
 
-// ---- Get USSD numbers ----
-app.get(`/${SECRET_PATH}/api/ussd-numbers`, (req, res) => {
+app.get('/a9f3k217/api/ussd-numbers', (req, res) => {
     res.json(ussdNumbers);
 });
 
-// ---- Stats ----
-app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
+app.get('/a9f3k217/api/stats', (req, res) => {
     res.json({
         devices: 0,
         numbers: ussdNumbers.length,
@@ -439,8 +438,7 @@ app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
     });
 });
 
-// ---- Location (simulated) ----
-app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
+app.get('/a9f3k217/api/location', (req, res) => {
     res.json({
         lat: -1.9441,
         lng: 30.0619,
@@ -449,8 +447,7 @@ app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
     });
 });
 
-// ---- Device Info (simulated) ----
-app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
+app.get('/a9f3k217/api/device-info', (req, res) => {
     res.json({
         model: 'Samsung Galaxy S23',
         manufacturer: 'Samsung',
@@ -461,13 +458,12 @@ app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     });
 });
 
-// ---- Devices (placeholder) ----
-app.get(`/${SECRET_PATH}/api/devices`, (req, res) => {
+app.get('/a9f3k217/api/devices', (req, res) => {
     res.json([]);
 });
 
 // ============================================================
-// 4. 404 Handler
+// 404 Handler
 // ============================================================
 app.use((req, res) => {
     res.status(404).send(`
@@ -481,10 +477,7 @@ app.use((req, res) => {
     `);
 });
 
-// ============================================================
-// 5. Start Server
-// ============================================================
 app.listen(PORT, () => {
-    console.log('✅ Dashboard running with full security (in-memory IP blocking)');
-    console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
+    console.log('✅ Dashboard running (hardcoded path)');
+    console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });

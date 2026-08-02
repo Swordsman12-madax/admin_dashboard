@@ -1,10 +1,10 @@
-// server.js – HARDCODED SECRET PATH (ignores env)
+// server.js – WITH PERSISTENT LOGIN (survives refresh)
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔒 HARDCODED – ignore any environment variable
+// Hardcoded secret path
 const SECRET_PATH = 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
@@ -44,10 +44,9 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD – HARDCODED PATH
+// ADMIN DASHBOARD – with persistent login
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
-    // Build the HTML using a regular string (concatenation) to avoid syntax issues
     let html = '<!DOCTYPE html>\n';
     html += '<html>\n';
     html += '<head>\n';
@@ -205,6 +204,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    });\n';
     html += '    const data = await response.json();\n';
     html += '    if (data.success) {\n';
+    html += '      localStorage.setItem("adminLoggedIn", "true");\n';
     html += '      document.getElementById("loginContainer").style.display = "none";\n';
     html += '      document.getElementById("dashboard").classList.remove("hidden");\n';
     html += '      loadData();\n';
@@ -225,6 +225,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '}\n';
     html += '\n';
     html += 'function logout() {\n';
+    html += '  localStorage.removeItem("adminLoggedIn");\n';
     html += '  document.getElementById("loginUser").value = "";\n';
     html += '  document.getElementById("loginPass").value = "";\n';
     html += '  document.getElementById("dashboard").classList.add("hidden");\n';
@@ -278,7 +279,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    } else {\n';
     html += '      document.getElementById("mapLink").style.display = "none";\n';
     html += '    }\n';
-     html += '  } catch {}\n';
+    html += '  } catch {}\n';
     html += '}\n';
     html += '\n';
     html += 'async function refreshDeviceInfo() {\n';
@@ -339,6 +340,17 @@ app.get('/a9f3k217', (req, res) => {
     html += '  });\n';
     html += '  html += \'</tbody></table>\';\n';
     html += '  container.innerHTML = html;\n';
+    html += '}\n';
+    html += '\n';
+    html += '// ============================================\n';
+    html += '// PERSISTENT LOGIN – check on page load\n';
+    html += '// ============================================\n';
+    html += 'if (localStorage.getItem("adminLoggedIn") === "true") {\n';
+    html += '  document.getElementById("loginContainer").style.display = "none";\n';
+    html += '  document.getElementById("dashboard").classList.remove("hidden");\n';
+    html += '  loadData();\n';
+    html += '  refreshLocation();\n';
+    html += '  refreshDeviceInfo();\n';
     html += '}\n';
     html += '\n';
     html += 'document.getElementById("loginPass").addEventListener("keypress", (e) => {\n';
@@ -478,6 +490,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('✅ Dashboard running (hardcoded path)');
+    console.log('✅ Dashboard running (persistent login)');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });

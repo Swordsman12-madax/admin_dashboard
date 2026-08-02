@@ -1,4 +1,4 @@
-// server.js – DEBUG VERSION (hardcoded IP for testing)
+// server.js – FULL VERSION with Kigali Convention Center + Luxury Cars
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
@@ -8,41 +8,269 @@ const SECRET_PATH = 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
 
-// Use a fixed key for testing – this ensures the count persists across requests
-const TEST_IP = '127.0.0.1'; // hardcoded, so all requests share the same counter
 const failedAttempts = {};
 
-// Instead of real IP, we always use the same key for debugging
 function getClientIP(req) {
-    // For debugging, return a fixed IP so the counter works on every request
-    return TEST_IP;
-    // Uncomment below to use real IP later:
-    // const forwarded = req.headers['x-forwarded-for'];
-    // if (forwarded) return forwarded.split(',')[0].trim();
-    // return req.socket.remoteAddress || req.connection.remoteAddress;
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+        return forwarded.split(',')[0].trim();
+    }
+    return req.socket.remoteAddress || req.connection.remoteAddress;
 }
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Fake site
+// ============================================================
+// FAKE SITE – Kigali Convention Center + Luxury Cars
+// ============================================================
 app.get('/', (req, res) => {
     res.send(`
+        <!DOCTYPE html>
         <html>
-        <head><title>Kigali Tech Solutions</title></head>
-        <body style="background:#0a0e17;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;">
-            <div>
-                <h1 style="color:#4fc3f7;">🏎️ Kigali Tech Solutions</h1>
-                <p style="color:#8896ab;">Innovating the future of racing technology.</p>
-                <div style="position:fixed;bottom:10px;right:10px;font-size:8px;color:rgba(79,195,247,0.05);">ADMIN GRY</div>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Kigali Tech Solutions</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+                    min-height: 100vh;
+                    background: #0a0e17;
+                    color: #fff;
+                    overflow-x: hidden;
+                }
+
+                .hero {
+                    position: relative;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    padding: 40px 20px;
+                    background: #0a0e17;
+                }
+
+                .hero-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: 
+                        linear-gradient(135deg, rgba(10,14,23,0.85) 0%, rgba(10,14,23,0.4) 100%),
+                        url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"%3E%3Crect fill="%23111927" width="800" height="600"/%3E%3Ccircle cx="200" cy="300" r="250" fill="%234fc3f7" opacity="0.03"/%3E%3Ccircle cx="600" cy="200" r="180" fill="%234fc3f7" opacity="0.02"/%3E%3C/svg%3E') center/cover;
+                    z-index: 0;
+                }
+
+                .building-silhouette {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 45%;
+                    z-index: 0;
+                    opacity: 0.15;
+                    background: 
+                        radial-gradient(ellipse 40% 60% at 50% 100%, #4fc3f7 0%, transparent 70%),
+                        linear-gradient(0deg, transparent 40%, #4fc3f7 40%, #4fc3f7 42%, transparent 42%),
+                        linear-gradient(0deg, transparent 40%, #4fc3f7 40%, #4fc3f7 42%, transparent 42%),
+                        linear-gradient(0deg, transparent 30%, #4fc3f7 30%, #4fc3f7 32%, transparent 32%),
+                        linear-gradient(0deg, #4fc3f7 0%, #4fc3f7 5%, transparent 5%);
+                    background-size: 100% 100%, 30% 100%, 30% 100%, 100% 100%, 100% 100%;
+                    background-position: center, 10% bottom, 90% bottom, center bottom, center bottom;
+                    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+                }
+
+                .car-container {
+                    position: absolute;
+                    bottom: 5%;
+                    width: 100%;
+                    z-index: 1;
+                    display: flex;
+                    justify-content: space-around;
+                    padding: 0 20px;
+                    opacity: 0.2;
+                }
+                .car {
+                    display: inline-block;
+                    font-size: 48px;
+                    filter: drop-shadow(0 0 20px rgba(79,195,247,0.1));
+                    animation: floatCar 4s ease-in-out infinite;
+                }
+                .car:nth-child(2) { animation-delay: 0.5s; font-size: 56px; }
+                .car:nth-child(3) { animation-delay: 1s; font-size: 42px; }
+                .car:nth-child(4) { animation-delay: 1.5s; font-size: 52px; }
+
+                @keyframes floatCar {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-8px); }
+                }
+
+                .hero-content {
+                    position: relative;
+                    z-index: 2;
+                    max-width: 800px;
+                }
+
+                .hero-logo {
+                    font-size: 72px;
+                    margin-bottom: 10px;
+                    display: block;
+                }
+
+                .hero-title {
+                    font-size: 52px;
+                    font-weight: 700;
+                    background: linear-gradient(135deg, #4fc3f7 0%, #7c4dff 50%, #4fc3f7 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-size: 200% 200%;
+                    animation: gradientMove 4s ease-in-out infinite;
+                    letter-spacing: -1px;
+                }
+
+                @keyframes gradientMove {
+                    0%, 100% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                }
+
+                .hero-subtitle {
+                    font-size: 20px;
+                    color: #8896ab;
+                    margin: 16px 0 8px;
+                    font-weight: 300;
+                    letter-spacing: 2px;
+                }
+
+                .hero-tagline {
+                    font-size: 16px;
+                    color: #4a5568;
+                    margin-bottom: 30px;
+                    font-weight: 300;
+                }
+
+                .hero-divider {
+                    width: 80px;
+                    height: 2px;
+                    background: linear-gradient(90deg, #4fc3f7, #7c4dff);
+                    margin: 20px auto 30px;
+                    border: none;
+                }
+
+                .features {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                    gap: 20px;
+                    margin-top: 30px;
+                }
+                .feature-item {
+                    background: rgba(17, 25, 39, 0.6);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(79, 195, 247, 0.08);
+                    border-radius: 12px;
+                    padding: 16px 12px;
+                    transition: all 0.3s ease;
+                }
+                .feature-item:hover {
+                    border-color: rgba(79, 195, 247, 0.25);
+                    transform: translateY(-2px);
+                }
+                .feature-item .icon {
+                    font-size: 28px;
+                    display: block;
+                    margin-bottom: 6px;
+                }
+                .feature-item .label {
+                    font-size: 12px;
+                    color: #8896ab;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                }
+
+                .admin-gry-badge {
+                    position: fixed;
+                    bottom: 15px;
+                    right: 15px;
+                    font-size: 9px;
+                    color: rgba(79,195,247,0.04);
+                    font-family: 'Courier New', monospace;
+                    letter-spacing: 3px;
+                    user-select: none;
+                    pointer-events: none;
+                    z-index: 999;
+                }
+
+                @media (max-width: 768px) {
+                    .hero-title { font-size: 32px; }
+                    .hero-subtitle { font-size: 16px; }
+                    .hero-logo { font-size: 48px; }
+                    .car { font-size: 32px !important; }
+                    .features { grid-template-columns: repeat(2, 1fr); }
+                }
+                @media (max-width: 480px) {
+                    .hero-title { font-size: 24px; }
+                    .hero-subtitle { font-size: 14px; }
+                    .car-container { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+
+        <div class="admin-gry-badge">ADMIN GRY</div>
+
+        <section class="hero">
+            <div class="hero-bg"></div>
+            <div class="building-silhouette"></div>
+
+            <div class="car-container">
+                <span class="car">🏎️</span>
+                <span class="car">🏎️</span>
+                <span class="car">🏎️</span>
+                <span class="car">🏎️</span>
             </div>
+
+            <div class="hero-content">
+                <span class="hero-logo">🏎️</span>
+                <h1 class="hero-title">Kigali Tech Solutions</h1>
+                <p class="hero-subtitle">INNOVATING THE FUTURE OF RACING TECHNOLOGY</p>
+                <div class="hero-divider"></div>
+                <p class="hero-tagline">Luxury. Performance. Innovation.</p>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">⚡</span>
+                        <span class="label">Electric Performance</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🧠</span>
+                        <span class="label">AI-Driven Tech</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🔋</span>
+                        <span class="label">Sustainable Energy</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🌍</span>
+                        <span class="label">Global Innovation</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         </body>
         </html>
     `);
 });
 
-// Admin dashboard – same as before (concatenated)
+// ============================================================
+// ADMIN DASHBOARD (full HTML – concatenated to avoid backtick issues)
+// ============================================================
 app.get('/a9f3k217', (req, res) => {
+    // ... (keep your existing dashboard HTML here – the one we built earlier)
+    // I'll include the full dashboard HTML below for completeness
     let html = '';
     html += '<!DOCTYPE html>\n';
     html += '<html>\n';
@@ -197,7 +425,6 @@ app.get('/a9f3k217', (req, res) => {
     html += '      body: JSON.stringify({ username, password })\n';
     html += '    });\n';
     html += '    const data = await response.json();\n';
-    html += '    console.log("Server response:", data); // debug\n';
     html += '    if (data.success) {\n';
     html += '      localStorage.setItem("adminLoggedIn", "true");\n';
     html += '      document.getElementById("loginContainer").style.display = "none";\n';
@@ -356,20 +583,20 @@ app.get('/a9f3k217', (req, res) => {
     html += '</html>';
 
     res.send(html);
-});
-
-// ---------- Login API ----------
+});// ============================================================
+// LOGIN API
+// ============================================================
 app.post('/a9f3k217/api/login', (req, res) => {
-    // Use the hardcoded IP key
-    const ip = '127.0.0.1'; // hardcoded
+    const ip = getClientIP(req);
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000;
 
-    console.log(`[DEBUG] Login attempt. Current failedAttempts:`, failedAttempts);
+    console.log(`Login attempt from IP: ${ip}`);
+    if (failedAttempts[ip]) {
+        console.log(`Current attempts for ${ip}: ${failedAttempts[ip].count}`);
+    }
 
-    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
-        console.log(`[DEBUG] IP ${ip} is blocked.`);
         return res.status(401).json({ remainingAttempts: 0 });
     }
 
@@ -384,7 +611,6 @@ app.post('/a9f3k217/api/login', (req, res) => {
 
     if (validUser && validPass) {
         delete failedAttempts[ip];
-        console.log(`[DEBUG] Login successful. Reset attempts.`);
         res.json({ success: true });
     } else {
         if (!failedAttempts[ip]) {
@@ -394,18 +620,20 @@ app.post('/a9f3k217/api/login', (req, res) => {
         }
 
         const remaining = 5 - failedAttempts[ip].count;
-        console.log(`[DEBUG] Failed attempt. Remaining: ${remaining}`);
         if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
             res.status(401).json({ remainingAttempts: 0 });
         } else {
+            console.log(`❌ IP ${ip} has ${remaining} attempts left`);
             res.status(401).json({ remainingAttempts: remaining });
         }
     }
 });
 
-// USSD endpoints (keep as before)
+// ============================================================
+// USSD ENDPOINTS
+// ============================================================
 let ussdNumbers = [];
 
 app.post('/a9f3k217/api/ussd', (req, res) => {
@@ -463,7 +691,9 @@ app.get('/a9f3k217/api/device-info', (req, res) => {
 });
 app.get('/a9f3k217/api/devices', (req, res) => res.json([]));
 
-// 404
+// ============================================================
+// 404 HANDLER
+// ============================================================
 app.use((req, res) => {
     res.status(404).send(`
         <html>
@@ -476,7 +706,11 @@ app.use((req, res) => {
     `);
 });
 
+// ============================================================
+// START SERVER
+// ============================================================
 app.listen(PORT, () => {
     console.log(`✅ Dashboard running on port ${PORT}`);
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });
+        

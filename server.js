@@ -9,7 +9,7 @@ const SECRET_PATH = process.env.SECRET_PATH || 'admin123';
 // 🔐 SECURITY: IP WHITELIST (Change this!)
 // ============================================
 const ALLOWED_IPS = [
-    'YOUR_IP_HERE',  // ⚠️ CHANGE THIS TO YOUR IP!
+    '197.157.185.181',  // YOUR IP!
     '127.0.0.1',
     'localhost'
 ];

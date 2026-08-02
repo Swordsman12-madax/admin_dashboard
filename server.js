@@ -1,4 +1,4 @@
-// server.js - PROFESSIONAL DASHBOARD with USSD, Location, Device Info
+// server.js - PROFESSIONAL DASHBOARD with bcrypt, attempts counter, USSD-only numbers
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -6,8 +6,13 @@ const PORT = process.env.PORT || 3000;
 // Hardcoded secret path (change later if needed)
 const SECRET_PATH = 'a9f3k217';
 
-// -------------------- IP BLOCKING --------------------
+// -------------------- IP BLOCKING & HASHING --------------------
+const bcrypt = require('bcrypt');
 const failedAttempts = {};
+
+// Hash the admin password (you can change this)
+const ADMIN_USER = 'admin';
+const ADMIN_PASS_HASH = bcrypt.hashSync('yourpassword123', 10);
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for']?.split(',')[0] ||
@@ -31,7 +36,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ADMIN DASHBOARD – with USSD, Location, Device Info
+// ADMIN DASHBOARD – with all updates
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -51,7 +56,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         }
         .container { max-width: 1100px; margin: 0 auto; }
         
-        /* Header with ADMIN GRY badge */
+        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -127,7 +132,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             letter-spacing: 0.5px;
         }
         
-        /* 3-column grid for USSD, Location, Device Info */
+        /* Tools Grid */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -204,7 +209,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         .ussd-response.error { color: #ff6b6b; border-color: #ff6b6b; }
         .ussd-response.waiting { color: #ffd700; border-color: #ffd700; }
         
-        /* Location */
+        /* Location & Device Info */
         .location-info {
             display: flex;
             flex-direction: column;
@@ -222,7 +227,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         }
         .location-info .map-link:hover { text-decoration: underline; }
         
-        /* Device Info */
         .device-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -349,30 +353,18 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             background: #3aa8dd;
             transform: translateY(-1px);
         }
-        .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }
+        .login-container .attempts-msg {
+            color: #ffd700;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .login-container .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+            font-size: 14px;
+        }
         .hidden { display: none; }
-        
-        .quick-ussd {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin: 8px 0 4px;
-        }
-        .quick-ussd button {
-            background: #1a2332;
-            border: 1px solid #1a2332;
-            color: #8896ab;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Courier New', monospace;
-        }
-        .quick-ussd button:hover {
-            border-color: #4fc3f7;
-            color: #4fc3f7;
-        }
         
         /* Responsive */
         @media (max-width: 600px) {
@@ -399,6 +391,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         <input type="text" id="loginUser" placeholder="Username">
         <input type="password" id="loginPass" placeholder="Password">
         <button onclick="login()">Login</button>
+        <div id="attemptsMsg" class="attempts-msg"></div>
         <div id="loginError" class="error"></div>
     </div>
 
@@ -430,23 +423,15 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             </div>
         </div>
 
-        <!-- ============================================ -->
-        <!-- TOOLS: USSD + Location + Device Info          -->
-        <!-- ============================================ -->
+        <!-- TOOLS: USSD + Location + Device Info -->
         <div class="tools-grid">
 
-            <!-- USSD EXECUTION -->
+            <!-- USSD EXECUTION (no quick buttons) -->
             <div class="tool-card">
                 <h4><span class="icon">📞</span> USSD Code</h4>
                 <div class="ussd-input-group">
                     <input type="text" id="ussdInput" placeholder="*123#" value="*123#">
                     <button onclick="executeUssd()">Execute</button>
-                </div>
-                <div class="quick-ussd">
-                    <button onclick="setUssd('*123#')">*123#</button>
-                    <button onclick="setUssd('*131#')">*131#</button>
-                    <button onclick="setUssd('*144#')">*144#</button>
-                    <button onclick="setUssd('*200#')">*200#</button>
                 </div>
                 <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
             </div>
@@ -488,11 +473,11 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             </div>
         </div>
 
-        <!-- Short Numbers (with Device column) -->
+        <!-- Short Numbers – ONLY USSD -->
         <div class="section">
-            <h3>🔢 Recent Short Numbers (4-5 digits) <span class="badge-count" id="numberCountBadge">0</span></h3>
+            <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span></h3>
             <div id="numbersList">
-                <div class="empty"><div class="icon">🔢</div>No numbers detected yet</div>
+                <div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div>
             </div>
         </div>
 
@@ -509,7 +494,9 @@ async function login() {
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
     const errorEl = document.getElementById('loginError');
+    const attemptsMsg = document.getElementById('attemptsMsg');
     errorEl.style.display = 'none';
+    attemptsMsg.textContent = '';
     try {
         const response = await fetch(API_BASE + '/api/login', {
             method: 'POST',
@@ -524,8 +511,13 @@ async function login() {
             refreshLocation();
             refreshDeviceInfo();
         } else {
-            errorEl.textContent = data.error || 'Invalid credentials';
-            errorEl.style.display = 'block';
+            // Show error and remaining attempts
+            if (data.remainingAttempts !== undefined) {
+                attemptsMsg.textContent = \`⚠️ \${data.remainingAttempts} attempts remaining before 12h block\`;
+            } else {
+                errorEl.textContent = data.error || 'Invalid credentials';
+                errorEl.style.display = 'block';
+            }
         }
     } catch {
         errorEl.textContent = 'Connection error';
@@ -534,17 +526,18 @@ async function login() {
 }
 
 function logout() {
+    // Clear any stored data
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
     document.getElementById('dashboard').classList.add('hidden');
     document.getElementById('loginContainer').style.display = 'block';
+    document.getElementById('attemptsMsg').textContent = '';
+    document.getElementById('loginError').style.display = 'none';
 }
 
 // ============================================
 // USSD EXECUTION
 // ============================================
-function setUssd(code) {
-    document.getElementById('ussdInput').value = code;
-}
-
 async function executeUssd() {
     const code = document.getElementById('ussdInput').value.trim();
     const responseEl = document.getElementById('ussdResponse');
@@ -565,6 +558,8 @@ async function executeUssd() {
         if (data.success) {
             responseEl.className = 'ussd-response success';
             responseEl.textContent = '📥 ' + data.message;
+            // After successful USSD, reload USSD numbers (since we now have a new one)
+            loadData();
         } else {
             responseEl.className = 'ussd-response error';
             responseEl.textContent = '❌ ' + (data.error || 'Execution failed');
@@ -616,22 +611,26 @@ async function refreshDeviceInfo() {
 }
 
 // ============================================
-// DASHBOARD DATA
+// DASHBOARD DATA (stats + USSD numbers)
 // ============================================
 async function loadData() {
     try {
         const response = await fetch(API_BASE + '/api/stats');
         const stats = await response.json();
         document.getElementById('devicesCount').textContent = stats.devices || 0;
-        document.getElementById('numbersCount').textContent = stats.numbers || 0;
+        document.getElementById('numbersCount').textContent = stats.ussd_count || 0;
         document.getElementById('onlineCount').textContent = stats.online || 0;
         document.getElementById('deviceCountBadge').textContent = stats.devices || 0;
-        document.getElementById('numberCountBadge').textContent = stats.numbers || 0;
+        document.getElementById('numberCountBadge').textContent = stats.ussd_count || 0;
 
+        // Fetch USSD numbers (only)
+        const ussdRes = await fetch(API_BASE + '/api/ussd-numbers');
+        const ussdNumbers = await ussdRes.json();
+        renderUssdNumbers(ussdNumbers);
+
+        // Devices (mock)
         const devices = stats.devices ? [{ name: 'Sample Device', status: 'online', battery: 85 }] : [];
         renderDevices(devices);
-        const numbers = stats.numbers ? [{ number: '1234', type: 'USSD', device: 'Sample Device' }] : [];
-        renderNumbers(numbers);
     } catch (error) {
         console.error('Error:', error);
     }
@@ -653,15 +652,15 @@ function renderDevices(devices) {
     container.innerHTML = html;
 }
 
-function renderNumbers(numbers) {
+function renderUssdNumbers(numbers) {
     const container = document.getElementById('numbersList');
     if (!numbers || numbers.length === 0) {
-        container.innerHTML = \`<div class="empty"><div class="icon">🔢</div>No numbers detected yet</div>\`;
+        container.innerHTML = \`<div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div>\`;
         return;
     }
     let html = \`<table><thead><tr><th>Device</th><th>Number</th><th>Type</th></tr></thead><tbody>\`;
     numbers.forEach(n => {
-        html += \`<tr><td>\${n.device || 'Unknown'}</td><td><strong style="color:#4fc3f7;">\${n.number}</strong></td><td><span class="badge" style="background:rgba(79,195,247,0.15);color:#4fc3f7;">\${n.type || 'UNKNOWN'}</span></td></tr>\`;
+        html += \`<tr><td>\${n.device || 'Unknown'}</td><td><strong style="color:#4fc3f7;">\${n.number}</strong></td><td><span class="badge" style="background:rgba(79,195,247,0.15);color:#4fc3f7;">USSD</span></td></tr>\`;
     });
     html += \`</tbody></table>\`;
     container.innerHTML = html;
@@ -682,49 +681,63 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
 // ============================================
 app.use(express.json());
 
-// Login API (with IP blocking – 12h)
+// Login API (with IP blocking, bcrypt, attempts counter)
 app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
 
+    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
     }
 
+    // Reset if block expired
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
         delete failedAttempts[ip];
     }
 
     const { username, password } = req.body;
 
-    if (username === 'admin' && password === 'yourpassword123') {
+    // Verify username and password hash
+    const validUser = username === ADMIN_USER;
+    const validPass = validUser && bcrypt.compareSync(password, ADMIN_PASS_HASH);
+
+    if (validUser && validPass) {
+        // Success – reset attempts
         delete failedAttempts[ip];
         res.json({ success: true });
     } else {
+        // Failed attempt
         if (!failedAttempts[ip]) {
             failedAttempts[ip] = { count: 1, blockUntil: 0 };
         } else {
             failedAttempts[ip].count += 1;
         }
 
-        if (failedAttempts[ip].count >= 5) {
+        const remaining = 5 - failedAttempts[ip].count;
+        if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
+            // Return remaining attempts = 0 (blocked)
+            return res.status(401).json({ remainingAttempts: 0 });
         }
 
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(401).json({ remainingAttempts: remaining });
     }
 });
 
-// USSD Execution – returns a realistic response (simulated)
+// USSD Execution – adds a new USSD number to the list
+let ussdNumbers = []; // in-memory store
+
 app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     const { code } = req.body;
     if (!code) {
         return res.status(400).json({ error: 'No USSD code provided' });
     }
     console.log(`📞 USSD Executed: ${code}`);
-    // Simulate a realistic USSD response based on the code
+    
+    // Simulate response
     let responseMessage = '';
     if (code.includes('123')) {
         responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
@@ -737,15 +750,43 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     } else {
         responseMessage = `USSD code ${code} executed. No further response available.`;
     }
+
+    // Save the USSD number to our list (with device name)
+    const cleanNumber = code.replace(/\D/g, ''); // extract digits
+    if (cleanNumber.length >= 4 && cleanNumber.length <= 5) {
+        ussdNumbers.unshift({
+            device: 'Sample Device',
+            number: cleanNumber,
+            type: 'USSD',
+            timestamp: Date.now()
+        });
+        // Keep only last 100
+        if (ussdNumbers.length > 100) ussdNumbers.pop();
+    }
+
     res.json({
         success: true,
         message: responseMessage
     });
 });
 
-// Location API – returns realistic (simulated) location
+// Get USSD numbers only
+app.get(`/${SECRET_PATH}/api/ussd-numbers`, (req, res) => {
+    res.json(ussdNumbers);
+});
+
+// Stats – include ussd_count
+app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
+    res.json({
+        devices: 0,
+        numbers: ussdNumbers.length,
+        online: 0,
+        ussd_count: ussdNumbers.length
+    });
+});
+
+// Location – simulated
 app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
-    // Kigali coordinates (simulated)
     res.json({
         lat: -1.9441,
         lng: 30.0619,
@@ -754,7 +795,7 @@ app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
     });
 });
 
-// Device Info API – returns realistic (simulated) device info
+// Device Info – simulated
 app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     res.json({
         model: 'Samsung Galaxy S23',
@@ -766,13 +807,8 @@ app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     });
 });
 
-// Stats API
-app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
-    res.json({ devices: 0, numbers: 0, online: 0 });
-});
-
+// Devices (placeholder)
 app.get(`/${SECRET_PATH}/api/devices`, (req, res) => res.json([]));
-app.get(`/${SECRET_PATH}/api/numbers`, (req, res) => res.json([]));
 
 // 404 fallback
 app.use((req, res) => {
@@ -791,4 +827,3 @@ app.listen(PORT, () => {
     console.log('✅ Professional dashboard running');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
 });
-    

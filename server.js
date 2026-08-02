@@ -1,10 +1,19 @@
-// server.js - PROFESSIONAL DASHBOARD with ADMIN GRY at top
+// server.js - PROFESSIONAL DASHBOARD with IP BLOCKING (12h)
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Hardcoded secret path (change later if needed)
 const SECRET_PATH = 'a9f3k217';
+
+// -------------------- IP BLOCKING --------------------
+const failedAttempts = {};
+
+function getClientIP(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0] ||
+           req.socket.remoteAddress ||
+           req.connection.remoteAddress;
+}
 
 // Fake site (what everyone else sees)
 app.get('/', (req, res) => {
@@ -22,7 +31,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ADMIN DASHBOARD – Professional version
+// ADMIN DASHBOARD – Professional version (no prefilled username)
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -254,9 +263,9 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         <div class="logo">🔐</div>
         <h3>Admin Access</h3>
         <p class="sub">Enter your credentials</p>
-        <input type="text" id="loginUser" placeholder="Username" value="admin">
+        <input type="text" id="loginUser" placeholder="Username">
         <input type="password" id="loginPass" placeholder="Password">
-        <button onclick="login()">Sign In</button>
+        <button onclick="login()">Login</button>
         <div id="loginError" class="error"></div>
     </div>
 
@@ -327,7 +336,7 @@ async function login() {
             document.getElementById('dashboard').classList.remove('hidden');
             loadData();
         } else {
-            errorEl.textContent = 'Invalid credentials';
+            errorEl.textContent = data.error || 'Invalid credentials';
             errorEl.style.display = 'block';
         }
     } catch {
@@ -404,20 +413,47 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
     `);
 });
 
-// Login API
+// -------------------- LOGIN API with IP BLOCKING (12h) --------------------
 app.use(express.json());
+
 app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
+    const ip = getClientIP(req);
+    const now = Date.now();
+    const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
+
+    // Check if blocked
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Reset if block expired
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
+        delete failedAttempts[ip];
+    }
+
     const { username, password } = req.body;
+
     if (username === 'admin' && password === 'yourpassword123') {
+        delete failedAttempts[ip];
         res.json({ success: true });
     } else {
+        if (!failedAttempts[ip]) {
+            failedAttempts[ip] = { count: 1, blockUntil: 0 };
+        } else {
+            failedAttempts[ip].count += 1;
+        }
+
+        if (failedAttempts[ip].count >= 5) {
+            failedAttempts[ip].blockUntil = now + blockDuration;
+            console.log(`🔒 IP ${ip} blocked for 12 hours`);
+        }
+
         res.status(401).json({ error: 'Invalid credentials' });
     }
 });
 
 // Stats API (with sample data for demonstration)
 app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
-    // For demo, we return 0 but you can later replace with real data
     res.json({ devices: 0, numbers: 0, online: 0 });
 });
 

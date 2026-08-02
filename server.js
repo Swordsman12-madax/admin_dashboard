@@ -34,7 +34,10 @@ app.get('/', (req, res) => {
         </html>
     `);
 });
-
+// Test route – always works
+app.get('/test', (req, res) => {
+    res.send('✅ Test route works!');
+});
 // ============================================================
 // 2. ADMIN DASHBOARD (full HTML – no backticks inside)
 // ============================================================

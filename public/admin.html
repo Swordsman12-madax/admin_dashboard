@@ -146,6 +146,7 @@ async function login() {
     const password = document.getElementById('loginPass').value;
     const errorEl = document.getElementById('loginError');
     const attemptsMsg = document.getElementById('attemptsMsg');
+    // Clear previous messages
     errorEl.style.display = 'none';
     attemptsMsg.textContent = '';
     try {
@@ -162,7 +163,10 @@ async function login() {
             loadData();
             refreshLocation();
             refreshDeviceInfo();
+            // Clear password field on success (optional)
+            document.getElementById('loginPass').value = '';
         } else {
+            // Failed attempt – show remaining attempts
             if (data.remainingAttempts !== undefined) {
                 let left = data.remainingAttempts;
                 let msg;
@@ -172,6 +176,8 @@ async function login() {
                     msg = '⚠️ ' + left + ' attempt' + (left > 1 ? 's' : '') + ' remaining before 12h block';
                 }
                 attemptsMsg.textContent = msg;
+                // Clear password field on failure
+                document.getElementById('loginPass').value = '';
             } else {
                 errorEl.textContent = data.error || 'Invalid credentials';
                 errorEl.style.display = 'block';
@@ -192,9 +198,6 @@ function logout() {
     document.getElementById('attemptsMsg').textContent = '';
     document.getElementById('loginError').style.display = 'none';
 }
-
-// ... (rest functions: executeUssd, refreshLocation, refreshDeviceInfo, loadData, etc.)
-// They remain unchanged – I'll include them below for completeness, but they are the same as before.
 
 async function executeUssd() {
     const code = document.getElementById('ussdInput').value.trim();
@@ -318,4 +321,4 @@ document.getElementById('loginPass').addEventListener('keypress', (e) => {
 });
 </script>
 </body>
-</html>
+    </html>

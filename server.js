@@ -194,7 +194,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
             border: 1px solid #1a2332;
             font-size: 13px;
             color: #8896ab;
-            min-height: 40px;
+            min-height: 50px;
             max-height: 120px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
@@ -202,6 +202,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
         }
         .ussd-response.success { color: #6bcb77; border-color: #6bcb77; }
         .ussd-response.error { color: #ff6b6b; border-color: #ff6b6b; }
+        .ussd-response.waiting { color: #ffd700; border-color: #ffd700; }
         
         /* Location */
         .location-info {
@@ -447,7 +448,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                     <button onclick="setUssd('*144#')">*144#</button>
                     <button onclick="setUssd('*200#')">*200#</button>
                 </div>
-                <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute</div>
+                <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
             </div>
 
             <!-- DEVICE LOCATION -->
@@ -458,7 +459,7 @@ app.get(`/${SECRET_PATH}`, (req, res) => {
                     <div class="coord"><strong>Longitude:</strong> <span id="lngValue">--</span></div>
                     <div class="coord"><strong>Accuracy:</strong> <span id="accValue">--</span></div>
                     <div class="coord"><strong>Last Updated:</strong> <span id="locTime">--</span></div>
-                    <a href="#" id="mapLink" class="map-link" target="_blank">Open in Google Maps →</a>
+                    <a href="#" id="mapLink" class="map-link" target="_blank" style="display:none;">Open in Google Maps →</a>
                     <button class="logout" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
                 </div>
             </div>
@@ -552,8 +553,8 @@ async function executeUssd() {
         responseEl.textContent = '⚠️ Please enter a USSD code';
         return;
     }
-    responseEl.className = 'ussd-response';
-    responseEl.textContent = '⏳ Executing...';
+    responseEl.className = 'ussd-response waiting';
+    responseEl.textContent = '⏳ Sending USSD code... waiting for response...';
     try {
         const res = await fetch(API_BASE + '/api/ussd', {
             method: 'POST',
@@ -563,7 +564,7 @@ async function executeUssd() {
         const data = await res.json();
         if (data.success) {
             responseEl.className = 'ussd-response success';
-            responseEl.textContent = '✅ ' + data.message;
+            responseEl.textContent = '📥 ' + data.message;
         } else {
             responseEl.className = 'ussd-response error';
             responseEl.textContent = '❌ ' + (data.error || 'Execution failed');
@@ -581,8 +582,8 @@ async function refreshLocation() {
     try {
         const res = await fetch(API_BASE + '/api/location');
         const data = await res.json();
-        document.getElementById('latValue').textContent = data.lat || '--';
-        document.getElementById('lngValue').textContent = data.lng || '--';
+        document.getElementById('latValue').textContent = data.lat ?? '--';
+        document.getElementById('lngValue').textContent = data.lng ?? '--';
         document.getElementById('accValue').textContent = data.accuracy ? data.accuracy + 'm' : '--';
         document.getElementById('locTime').textContent = data.time || '--';
         if (data.lat && data.lng) {
@@ -716,32 +717,44 @@ app.post(`/${SECRET_PATH}/api/login`, (req, res) => {
     }
 });
 
-// USSD Execution (simulated – sends to device or returns demo)
+// USSD Execution – returns a realistic response (simulated)
 app.post(`/${SECRET_PATH}/api/ussd`, (req, res) => {
     const { code } = req.body;
     if (!code) {
         return res.status(400).json({ error: 'No USSD code provided' });
     }
-    // This is a simulation. In production, you'd send this to the device.
     console.log(`📞 USSD Executed: ${code}`);
+    // Simulate a realistic USSD response based on the code
+    let responseMessage = '';
+    if (code.includes('123')) {
+        responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
+    } else if (code.includes('131')) {
+        responseMessage = 'Data bundle: 2GB remaining. Expires on 2026-08-15.';
+    } else if (code.includes('144')) {
+        responseMessage = 'Airtime balance: 500 RWF. Bonus: 100 RWF.';
+    } else if (code.includes('200')) {
+        responseMessage = 'Welcome to Kigali Tech Services. Please select an option:\n1. Account Info\n2. Data Plans\n3. Support';
+    } else {
+        responseMessage = `USSD code ${code} executed. No further response available.`;
+    }
     res.json({
         success: true,
-        message: `USSD code ${code} sent to device. Response will appear here when available.`
+        message: responseMessage
     });
 });
 
-// Location API (simulated – returns sample location)
+// Location API – returns realistic (simulated) location
 app.get(`/${SECRET_PATH}/api/location`, (req, res) => {
-    // Sample location (Kigali, Rwanda)
+    // Kigali coordinates (simulated)
     res.json({
         lat: -1.9441,
         lng: 30.0619,
-        accuracy: 12,
+        accuracy: 15,
         time: new Date().toLocaleString()
     });
 });
 
-// Device Info API (simulated)
+// Device Info API – returns realistic (simulated) device info
 app.get(`/${SECRET_PATH}/api/device-info`, (req, res) => {
     res.json({
         model: 'Samsung Galaxy S23',
@@ -778,3 +791,4 @@ app.listen(PORT, () => {
     console.log('✅ Professional dashboard running');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/${SECRET_PATH}`);
 });
+    

@@ -273,7 +273,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    document.getElementById("accValue").textContent = data.accuracy ? data.accuracy + "m" : "--";\n';
     html += '    document.getElementById("locTime").textContent = data.time || "--";\n';
     html += '    if (data.lat && data.lng) {\n';
-        html += '      document.getElementById("mapLink").href = "https://www.google.com/maps?q=" + data.lat + "," + data.lng;\n';
+    html += '      document.getElementById("mapLink").href = "https://www.google.com/maps?q=" + data.lat + "," + data.lng;\n';
     html += '      document.getElementById("mapLink").style.display = "inline";\n';
     html += '    } else {\n';
     html += '      document.getElementById("mapLink").style.display = "none";\n';

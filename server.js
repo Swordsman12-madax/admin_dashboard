@@ -70,3 +70,18 @@ app.listen(PORT, () => {
     console.log('🔑 SECRET_PATH:', SECRET_PATH);
     console.log('📍 https://admin-dashboard-teal-beta-28.vercel.app/' + SECRET_PATH);
 });
+// Catch-all route to see what paths are being hit
+app.get('*', (req, res) => {
+    res.send(`
+        <html>
+        <head><title>Debug</title></head>
+        <body style="background:#0a0e17;color:#fff;font-family:sans-serif;padding:20px;">
+            <h1 style="color:#4fc3f7;">🔍 Debug</h1>
+            <p>Requested path: <strong>${req.path}</strong></p>
+            <p>SECRET_PATH: <strong>${SECRET_PATH}</strong></p>
+            <p>Try: <a href="/${SECRET_PATH}" style="color:#4fc3f7;">/${SECRET_PATH}</a></p>
+            <p style="color:#8896ab;margin-top:20px;">ADMIN GRY</p>
+        </body>
+        </html>
+    `);
+});

@@ -60,16 +60,10 @@ app.get('/', (req, res) => {
                 }
 
                 .hero-bg {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: 
-                        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
-                        url('/images/kigali-convention-center.png') center/cover no-repeat;
-                    z-index: 0;
-                }
+    background: 
+        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
+        url('/kigali-convention-center.png') center/cover no-repeat;
+}
 
                 .car-container {
                     position: absolute;

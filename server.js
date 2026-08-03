@@ -28,14 +28,200 @@ app.use(express.urlencoded({ extended: true }));
 // ============================================================
 app.get('/', (req, res) => {
     res.send(`
+        <!DOCTYPE html>
         <html>
-        <head><title>Kigali Tech Solutions</title></head>
-        <body style="background:#0a0e17;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;">
-            <div>
-                <h1 style="color:#4fc3f7;">🏎️ Kigali Tech Solutions</h1>
-                <p style="color:#8896ab;">Innovating the future of racing technology.</p>
-                <div style="position:fixed;bottom:10px;right:10px;font-size:8px;color:rgba(79,195,247,0.05);">ADMIN GRY</div>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Kigali Tech Solutions</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+                    min-height: 100vh;
+                    background: #0a0e17;
+                    color: #fff;
+                    overflow-x: hidden;
+                }
+                .hero {
+                    position: relative;
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    padding: 40px 20px;
+                    background: #0a0e17;
+                }
+                .hero-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: 
+                        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
+                        url('https://raw.githubusercontent.com/Swordsman12-madax/admin_dashboard/main/public/images/kigali-convention-center.png') center/cover no-repeat;
+                    z-index: 0;
+                }
+                .car-container {
+                    position: absolute;
+                    bottom: 5%;
+                    width: 100%;
+                    z-index: 1;
+                    display: flex;
+                    justify-content: space-around;
+                    padding: 0 20px;
+                    opacity: 0.25;
+                }
+                .car {
+                    display: inline-block;
+                    font-size: 48px;
+                    filter: drop-shadow(0 0 20px rgba(79,195,247,0.1));
+                    animation: floatCar 4s ease-in-out infinite;
+                }
+                .car:nth-child(2) { animation-delay: 0.5s; font-size: 56px; }
+                .car:nth-child(3) { animation-delay: 1s; font-size: 42px; }
+                .car:nth-child(4) { animation-delay: 1.5s; font-size: 52px; }
+                @keyframes floatCar {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-8px); }
+                }
+                .hero-content {
+                    position: relative;
+                    z-index: 2;
+                    max-width: 800px;
+                }
+                .hero-logo {
+                    font-size: 72px;
+                    margin-bottom: 10px;
+                    display: block;
+                }
+                .hero-title {
+                    font-size: 52px;
+                    font-weight: 700;
+                    background: linear-gradient(135deg, #4fc3f7 0%, #7c4dff 50%, #4fc3f7 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-size: 200% 200%;
+                    animation: gradientMove 4s ease-in-out infinite;
+                    letter-spacing: -1px;
+                }
+                @keyframes gradientMove {
+                    0%, 100% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                }
+                .hero-subtitle {
+                    font-size: 20px;
+                    color: #8896ab;
+                    margin: 16px 0 8px;
+                    font-weight: 300;
+                    letter-spacing: 2px;
+                }
+                .hero-tagline {
+                    font-size: 16px;
+                    color: #4a5568;
+                    margin-bottom: 30px;
+                    font-weight: 300;
+                }
+                .hero-divider {
+                    width: 80px;
+                    height: 2px;
+                    background: linear-gradient(90deg, #4fc3f7, #7c4dff);
+                    margin: 20px auto 30px;
+                    border: none;
+                }
+                .features {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                    gap: 20px;
+                    margin-top: 30px;
+                }
+                .feature-item {
+                    background: rgba(17, 25, 39, 0.6);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(79, 195, 247, 0.08);
+                    border-radius: 12px;
+                    padding: 16px 12px;
+                    transition: all 0.3s ease;
+                }
+                .feature-item:hover {
+                    border-color: rgba(79, 195, 247, 0.25);
+                    transform: translateY(-2px);
+                }
+                .feature-item .icon {
+                    font-size: 28px;
+                    display: block;
+                    margin-bottom: 6px;
+                }
+                .feature-item .label {
+                    font-size: 12px;
+                    color: #8896ab;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                }
+                .admin-gry-badge {
+                    position: fixed;
+                    bottom: 15px;
+                    right: 15px;
+                    font-size: 9px;
+                    color: rgba(79,195,247,0.04);
+                    font-family: 'Courier New', monospace;
+                    letter-spacing: 3px;
+                    user-select: none;
+                    pointer-events: none;
+                    z-index: 999;
+                }
+                @media (max-width: 768px) {
+                    .hero-title { font-size: 32px; }
+                    .hero-subtitle { font-size: 16px; }
+                    .hero-logo { font-size: 48px; }
+                    .car { font-size: 32px !important; }
+                    .features { grid-template-columns: repeat(2, 1fr); }
+                }
+                @media (max-width: 480px) {
+                    .hero-title { font-size: 24px; }
+                    .hero-subtitle { font-size: 14px; }
+                    .car-container { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+        <div class="admin-gry-badge">ADMIN GRY</div>
+        <section class="hero">
+            <div class="hero-bg"></div>
+            <div class="car-container">
+                <span class="car">🏎️</span>
+                <span class="car">🏎️</span>
+                <span class="car">🏎️</span>
+                <span class="car">🏎️</span>
             </div>
+            <div class="hero-content">
+                <span class="hero-logo">🏎️</span>
+                <h1 class="hero-title">Kigali Tech Solutions</h1>
+                <p class="hero-subtitle">INNOVATING THE FUTURE OF RACING TECHNOLOGY</p>
+                <div class="hero-divider"></div>
+                <p class="hero-tagline">Luxury. Performance. Innovation.</p>
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="icon">⚡</span>
+                        <span class="label">Electric Performance</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🧠</span>
+                        <span class="label">AI-Driven Tech</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🔋</span>
+                        <span class="label">Sustainable Energy</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="icon">🌍</span>
+                        <span class="label">Global Innovation</span>
+                    </div>
+                </div>
+            </div>
+        </section>
         </body>
         </html>
     `);

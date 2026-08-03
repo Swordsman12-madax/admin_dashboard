@@ -1,4 +1,4 @@
-// server.js – Kigali Convention Center Image (File Path)
+// server.js – Kigali Convention Center Image (public/images/)
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -20,7 +20,7 @@ function getClientIP(req) {
 }
 
 // ============================================================
-// SERVE STATIC FILES (IMAGES)
+// SERVE STATIC FILES (IMAGES, CSS, ETC.)
 // ============================================================
 app.use(express.static('public'));
 
@@ -60,10 +60,16 @@ app.get('/', (req, res) => {
                 }
 
                 .hero-bg {
-    background: 
-        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
-        url('/kigali-convention-center.png') center/cover no-repeat;
-}
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: 
+                        linear-gradient(135deg, rgba(10,14,23,0.6) 0%, rgba(10,14,23,0.2) 100%),
+                        url('/images/kigali-convention-center.png') center/cover no-repeat;
+                    z-index: 0;
+                }
 
                 .car-container {
                     position: absolute;
@@ -359,7 +365,7 @@ app.get('/a9f3k217', (req, res) => {
     html += '          <div class="coord"><strong>Latitude:</strong> <span id="latValue">--</span></div>\n';
     html += '          <div class="coord"><strong>Longitude:</strong> <span id="lngValue">--</span></div>\n';
     html += '          <div class="coord"><strong>Accuracy:</strong> <span id="accValue">--</span></div>\n';
-    html += '              html += '          <div class="coord"><strong>Last Updated:</strong> <span id="locTime">--</span></div>\n';
+    html += '          <div class="coord"><strong>Last Updated:</strong> <span id="locTime">--</span></div>\n';
     html += '          <a href="#" id="mapLink" class="map-link" target="_blank" style="display:none;">Open in Google Maps →</a>\n';
     html += '          <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>\n';
     html += '        </div>\n';

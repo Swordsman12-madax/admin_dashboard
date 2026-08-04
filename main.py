@@ -693,3 +693,4 @@ class KigaliRacingApp(App):
 
 if __name__ == '__main__':
     KigaliRacingApp().run()
+# Trigger build

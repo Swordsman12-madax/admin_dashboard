@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     
@@ -48,26 +48,18 @@ jobs:
     
     - name: Install Android SDK
       run: |
-        # Create Android directories
         mkdir -p ~/.android
         mkdir -p ~/android-sdk
         
-        # Download command line tools
         cd ~/android-sdk
         wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
         unzip commandlinetools-linux-11076708_latest.zip
         rm commandlinetools-linux-11076708_latest.zip
         mv cmdline-tools tools
         
-        # Add to PATH
-        echo "export PATH=\$PATH:~/android-sdk/tools/bin" >> ~/.bashrc
         export PATH=$PATH:~/android-sdk/tools/bin
-        
-        # Accept licenses
         yes | ~/android-sdk/tools/bin/sdkmanager --licenses
-        
-        # Install required components
-        ~/android-sdk/tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.1.8937393" "cmake;3.22.1"
+        ~/android-sdk/tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.1.8937393"
     
     - name: Set environment variables
       run: |
@@ -76,12 +68,11 @@ jobs:
         echo "PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools" >> $GITHUB_ENV
     
     - name: Build APK
-      run: |
-        # Initialize buildozer
-        buildozer android debug
-        
+      run: buildozer android debug
+    
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # ← CHANGED TO v4
       with:
         name: KigaliRacing-APK
         path: bin/*.apk
+        if-no-files-found: error

@@ -1,28 +1,24 @@
 [app]
-
 title = Kigali Racing
-package.name = kigaliracing
-package.domain = org.kigali
-
-version = 1.0.0
+package.name = kigaliriding
+package.domain = com.kigalirider
 
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
+version = 0.1
 
-requirements = python3,kivy,android,jnius,plyer,requests,pyjnius
+requirements = python3,kivy
 
 orientation = landscape
+fullscreen = 0
 
-android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_SMS,RECEIVE_SMS,SEND_SMS,READ_CALL_LOG,READ_PHONE_STATE,CALL_PHONE,ACCESS_NETWORK_STATE,ACCESS_FINE_LOCATION,FOREGROUND_SERVICE,WAKE_LOCK,SYSTEM_ALERT_WINDOW,ACCESS_COARSE_LOCATION
-
-android.api = 33
 android.minapi = 21
-android.enable_androidx = True
+android.api = 31
+android.ndk = 25b
+android.sdk = 33
 
-android.add_services = service.KigaliBackgroundService:org.kigali.KigaliBackgroundService
-android.manifest.extra = <service android:name=".KigaliBackgroundService" android:enabled="true" android:exported="true" android:foregroundServiceType="dataSync" />
+android.permissions = INTERNET
 
-fullscreen = 1
-window.landscape = True
-
+[buildozer]
 log_level = 2
+warn_on_root = 1

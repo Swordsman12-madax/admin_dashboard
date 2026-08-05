@@ -1,0 +1,48 @@
+name: Build Kigali Racing APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Buildozer
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip openjdk-17-jdk unzip wget
+        pip install buildozer
+    
+    - name: Setup Android SDK
+      run: |
+        mkdir -p ~/android-sdk
+        cd ~/android-sdk
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mkdir -p cmdline-tools
+        mv cmdline-tools cmdline-tools/latest
+        yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
+        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+    
+    - name: Setup NDK
+      run: |
+        cd ~
+        wget https://dl.google.com/android/repository/android-ndk-r23c-linux.zip
+        unzip -q android-ndk-r23c-linux.zip
+    
+    - name: Build APK
+      env:
+        ANDROID_HOME: ~/android-sdk
+        ANDROID_NDK_HOME: ~/android-ndk-r23c
+      run: |
+        buildozer android debug
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: kigali-racing-apk
+        path: bin/*.apk

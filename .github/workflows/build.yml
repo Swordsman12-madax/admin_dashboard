@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Kigali Racing APK
 
 on:
   push:
@@ -7,52 +7,64 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04  # ← Changed to 20.04
+    runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
     
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.9'
-    
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          git zip unzip openjdk-17-jdk \
-          python3-pip autoconf libtool pkg-config \
-          zlib1g-dev libncurses5-dev libncursesw5-dev \
-          libtinfo5 cmake libffi-dev libssl-dev automake
+          build-essential \
+          git \
+          zip \
+          unzip \
+          openjdk-17-jdk \
+          python3-pip \
+          autoconf \
+          libtool \
+          pkg-config \
+          zlib1g-dev \
+          libncurses5-dev \
+          libncursesw5-dev \
+          libtinfo5 \
+          cmake \
+          libffi-dev \
+          libssl-dev
     
-    - name: Install buildozer
+    - name: Install Python packages
       run: |
         pip install --upgrade pip
         pip install buildozer cython
     
     - name: Setup Android SDK
       run: |
-        mkdir -p ~/android-sdk
-        cd ~/android-sdk
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-        unzip -q commandlinetools-linux-11076708_latest.zip
-        rm *.zip
-        mv cmdline-tools tools
-        export PATH=$PATH:~/android-sdk/tools/bin
-        yes | ~/android-sdk/tools/bin/sdkmanager --licenses
-        ~/android-sdk/tools/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;25.1.8937393"
+        mkdir -p /home/runner/android-sdk
+        cd /home/runner/android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mkdir -p cmdline-tools
+        mv cmdline-tools cmdline-tools/latest
+        echo "y" | cmdline-tools/latest/bin/sdkmanager --licenses
+        echo "y" | cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.0"
+    
+    - name: Download Android NDK
+      run: |
+        cd /home/runner
+        wget -q https://dl.google.com/android/repository/android-ndk-r23c-linux.zip
+        unzip -q android-ndk-r23c-linux.zip
     
     - name: Build APK
       env:
-        ANDROID_HOME: ~/android-sdk
-        ANDROID_SDK_ROOT: ~/android-sdk
+        ANDROID_HOME: /home/runner/android-sdk
+        ANDROID_NDK_HOME: /home/runner/android-ndk-r23c
       run: |
-        export PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools
         buildozer android debug
     
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: KigaliRacing-APK
+        name: kigali-racing-apk
         path: bin/*.apk

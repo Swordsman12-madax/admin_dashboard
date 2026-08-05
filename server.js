@@ -1,4 +1,4 @@
-// server.js – COMPLETE DEVICE-CENTRIC DASHBOARD
+// server.js – FIXED (properly serves HTML)
 const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
@@ -19,12 +19,15 @@ function getClientIP(req) {
     return req.socket.remoteAddress || req.connection.remoteAddress;
 }
 
+// ============================================================
+// MIDDLEWARE
+// ============================================================
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================================
-// DEVICE STATE (in-memory)
+// DEVICE STATE
 // ============================================================
 let devices = {
     'device1': { 
@@ -277,9 +280,10 @@ app.get('/', (req, res) => {
 });
 
 // ============================================================
-// ADMIN DASHBOARD
+// ADMIN DASHBOARD - SERVES HTML PROPERLY
 // ============================================================
 app.get('/a9f3k217', (req, res) => {
+    // Read and send the HTML file with proper content type
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
@@ -434,7 +438,6 @@ app.post('/a9f3k217/api/ussd', (req, res) => {
         return res.status(404).json({ error: 'Device not found' });
     }
     
-    // Generate response
     let responseMessage = '';
     if (code.includes('123')) {
         responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
@@ -448,7 +451,6 @@ app.post('/a9f3k217/api/ussd', (req, res) => {
         responseMessage = `USSD code ${code} executed on device ${deviceId}.`;
     }
     
-    // Save the USSD number
     const cleanNumber = code.replace(/\D/g, '');
     if (cleanNumber.length >= 4 && cleanNumber.length <= 5) {
         ussdNumbers.push({

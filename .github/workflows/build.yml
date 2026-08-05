@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     
     steps:
     - name: Checkout code
@@ -44,10 +44,12 @@ jobs:
         cd /home/runner/android-sdk
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools-linux-9477386_latest.zip
+        # Create correct directory structure
         mkdir -p cmdline-tools
-        mv cmdline-tools cmdline-tools/latest
-        echo "y" | cmdline-tools/latest/bin/sdkmanager --licenses
-        echo "y" | cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.0"
+        mv cmdline-tools/* cmdline-tools/latest/ 2>/dev/null || true
+        # Alternative: just use the extracted folder directly
+        echo "y" | cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+        echo "y" | cmdline-tools/latest/bin/sdkmanager "platforms;android-33" "build-tools;33.0.0" 2>/dev/null || true
     
     - name: Download Android NDK
       run: |

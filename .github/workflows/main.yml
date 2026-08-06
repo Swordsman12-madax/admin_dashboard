@@ -1,0 +1,55 @@
+name: Build Kigali Racing APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y openjdk-17-jdk python3-pip unzip wget
+        pip install buildozer
+
+    - name: Setup Android SDK
+      run: |
+        mkdir -p ~/android-sdk
+        cd ~/android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mkdir -p cmdline-tools
+        mv cmdline-tools cmdline-tools/latest 2>/dev/null || true
+        yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null 2>&1 || true
+        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;30.0.3" >/dev/null 2>&1 || true
+
+    - name: Setup NDK 25c
+      run: |
+        cd ~
+        wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip -q android-ndk-r25c-linux.zip
+
+    - name: Update buildozer.spec
+      run: |
+        sed -i 's/android.ndk = 23c/android.ndk = 25c/g' buildozer.spec
+        sed -i 's/android.api = 30/android.api = 31/g' buildozer.spec
+        echo "android.build_tools_version = 30.0.3" >> buildozer.spec
+
+    - name: Build APK
+      env:
+        ANDROID_HOME: ~/android-sdk
+        ANDROID_NDK_HOME: ~/android-ndk-r25c
+        GRADLE_OPTS: -Xmx2048m
+      run: buildozer android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: kigali-racing-apk
+        path: bin/*.apk
+        if-no-files-found: error

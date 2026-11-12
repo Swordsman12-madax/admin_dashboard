@@ -32,6 +32,7 @@ import weakref
 
 # ============================================================
 # ANDROID PERMISSIONS
+
 # ============================================================
 try:
     from android.permissions import request_permissions, Permission
